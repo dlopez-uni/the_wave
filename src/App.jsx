@@ -25,6 +25,11 @@ import * as Blockly from 'blockly';
 import 'blockly/blocks';
 import Es from 'blockly/msg/es';
 
+// Components
+import CharacterMascot from './components/CharacterMascot';
+import CompletionModal from './components/CompletionModal';
+import HelicopterScene from './components/HelicopterScene';
+
 // Locale and Block Registration
 Blockly.setLocale(Es);
 
@@ -176,7 +181,12 @@ const MissionStatus = ({ pinStates, isConnected }) => {
 const LevelMap = ({ onSelectLevel, levels }) => {
   return (
     <div className="level-path">
-      <header style={{ textAlign: 'center', marginBottom: '40px' }}>
+      <header style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
+        <motion.div style={{ position: 'absolute', top: '-10px', left: '10%' }}
+          animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4 }}>
+          <CharacterMascot size={150} emotion="happy" />
+        </motion.div>
+        
         <h1 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>Aventura Arduino</h1>
         <p style={{ color: '#777', maxWidth: '600px', margin: '0 auto' }}>¡Sigue el camino para convertirte en un Maestro Maker!</p>
       </header>
@@ -498,6 +508,10 @@ export default function App() {
                   </div>
 
                   <MissionStatus pinStates={pinStates} isConnected={isConnected} />
+                  
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
+                     <CharacterMascot size={100} emotion={hintVisible ? 'thinking' : 'happy'} speaking={hintVisible} />
+                  </div>
                 </div>
                 
                 <div style={{ padding: '30px', background: 'white', borderTop: '2px solid #f0f0f0' }}>
@@ -507,21 +521,30 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Blockly Region */}
-              <div style={{ flex: 1, position: 'relative', background: '#fcfcfc' }}>
-                <div ref={blocklyDiv} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+              {/* Split Work Region */}
+              <div style={{ flex: 1, display: 'flex', background: '#fcfcfc' }}>
                 
-                {/* Visual Hint Bubble */}
-                {hintVisible && (
-                  <motion.div 
-                    initial={{ scale: 0, y: 20 }} animate={{ scale: 1, y: 0 }}
-                    style={{ position: 'absolute', bottom: '100px', left: '40px', background: 'white', padding: '20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', border: '3px solid var(--accent)', maxWidth: '250px', zIndex: 100 }}
-                  >
-                    <div style={{ fontSize: '1.2rem', marginBottom: '8px' }}>💡 Pista de KitBot:</div>
-                    <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4 }}>Prueba a poner el bloque de <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
-                    <button onClick={() => setHintVisible(false)} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>¡Entendido!</button>
-                  </motion.div>
-                )}
+                {/* Blockly Area */}
+                <div style={{ flex: 3, position: 'relative' }}>
+                  <div ref={blocklyDiv} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+                  
+                  {/* Visual Hint Bubble */}
+                  {hintVisible && (
+                    <motion.div 
+                      initial={{ scale: 0, y: 20 }} animate={{ scale: 1, y: 0 }}
+                      style={{ position: 'absolute', bottom: '100px', left: '40px', background: 'white', padding: '20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', border: '3px solid var(--accent)', maxWidth: '250px', zIndex: 100 }}
+                    >
+                      <div style={{ fontSize: '1.2rem', marginBottom: '8px' }}>💡 Pista de KitBot:</div>
+                      <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4 }}>Prueba a poner el bloque de <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
+                      <button onClick={() => setHintVisible(false)} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>¡Entendido!</button>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Simulator Area */}
+                <div style={{ flex: 2, background: '#e0f2fe', position: 'relative' }}>
+                  <HelicopterScene pinStates={pinStates} />
+                </div>
               </div>
             </motion.div>
           )}
@@ -534,16 +557,6 @@ export default function App() {
           <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
             
             <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
-              
-              {/* SUCCESS MODAL */}
-              {activeModal === 'success' && (
-                <>
-                  <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🏆</div>
-                  <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>¡BRUTAL!</h2>
-                  <p style={{ fontSize: '1.2rem', color: '#777', marginBottom: '30px' }}>Has superado el reto como un auténtico inventor.</p>
-                  <button className="primary" style={{ width: '100%' }} onClick={() => { setActiveModal(null); setView('map'); }}>SIGUIENTE AVENTURA</button>
-                </>
-              )}
 
               {/* ERROR MODAL */}
               {activeModal === 'error' && (
@@ -604,6 +617,16 @@ void loop() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modern Completion Modal */}
+      <CompletionModal 
+        isOpen={activeModal === 'success'}
+        missionTitle={currentLevel?.title || 'Misión Superada'}
+        completionMessage="Has superado el reto como un auténtico inventor. ¡Increíble! 🎉"
+        stars={3}
+        onNext={() => { setActiveModal(null); setView('map'); }}
+        onRetry={() => { setActiveModal(null); }}
+      />
     </div>
   );
 }
