@@ -231,7 +231,7 @@ const LevelMap = ({ onSelectLevel, levels }) => {
               {level.title}
             </motion.span>
             
-            {index < levels.length - 1 && (
+            {index < levels.length - 1 ? (
               <svg width="200" height="70" style={{ margin: '5px 0', overflow: 'visible' }}>
                 <motion.path 
                   initial={{ pathLength: 0, opacity: 0 }}
@@ -245,10 +245,57 @@ const LevelMap = ({ onSelectLevel, levels }) => {
                   fill="none" 
                 />
               </svg>
+            ) : (
+              /* Path to Coming Soon */
+              <svg width="200" height="80" style={{ margin: '5px 0', overflow: 'visible' }}>
+                <motion.path 
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1, delay: 0.5 + index * 0.2 }}
+                  d={`M ${100 + currentOffset} 0 C ${100 + currentOffset} 40, 100 40, 100 80`} 
+                  stroke="#e2e8f0" 
+                  strokeWidth="12" 
+                  strokeLinecap="round"
+                  strokeDasharray="1 24"
+                  fill="none" 
+                />
+              </svg>
             )}
           </div>
         );
       })}
+
+      {/* Coming Soon Section */}
+      <div style={{ marginTop: '20px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
+        <div style={{ position: 'relative', width: '300px', height: '140px', display: 'flex', justifyContent: 'center' }}>
+          <motion.div animate={{ y: [0, -10, 0], x: [-5, 5, -5] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: 'absolute', top: '10%', left: '0%', fontSize: '5rem', opacity: 0.8 }}>☁️</motion.div>
+          <motion.div animate={{ y: [0, 12, 0], x: [5, -5, 5] }} transition={{ duration: 4, repeat: Infinity }} style={{ position: 'absolute', top: '0%', left: '30%', fontSize: '6rem', zIndex: 2 }}>☁️</motion.div>
+          <motion.div animate={{ y: [0, -8, 0], x: [-3, 3, -3] }} transition={{ duration: 6, repeat: Infinity }} style={{ position: 'absolute', top: '20%', left: '60%', fontSize: '5rem', opacity: 0.9 }}>☁️</motion.div>
+          <motion.div animate={{ y: [0, 15, 0] }} transition={{ duration: 7, repeat: Infinity }} style={{ position: 'absolute', top: '40%', left: '20%', fontSize: '4rem', opacity: 0.7, zIndex: 3 }}>☁️</motion.div>
+          <motion.div animate={{ y: [0, -12, 0] }} transition={{ duration: 5.5, repeat: Infinity }} style={{ position: 'absolute', top: '35%', left: '50%', fontSize: '4.5rem', opacity: 0.6, zIndex: 3 }}>☁️</motion.div>
+        </div>
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          style={{ 
+            textAlign: 'center', 
+            background: 'white', 
+            padding: '20px 40px', 
+            borderRadius: '40px', 
+            boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+            border: '4px dashed #e2e8f0',
+            marginTop: '-30px',
+            zIndex: 10
+          }}
+        >
+          <h3 style={{ fontFamily: 'var(--font-playful)', color: '#94a3b8', fontSize: '1.8rem', margin: 0 }}>¡Muy pronto!</h3>
+          <p style={{ color: '#cbd5e1', fontWeight: '900', fontSize: '1.1rem', margin: '5px 0 0 0', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Nuevas aventuras te esperan
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 };
