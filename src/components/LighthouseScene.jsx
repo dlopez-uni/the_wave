@@ -20,24 +20,33 @@ const LighthouseScene = ({ pinStates }) => {
     return Math.min(toggleCount * 15, 70);
   }, [toggleCount]);
 
+  const starsData = useMemo(() => {
+    return [...Array(12)].map(() => ({
+      top: `${5 + Math.random() * 30}%`,
+      left: `${5 + Math.random() * 90}%`,
+      duration: 2 + Math.random() * 2,
+      delay: Math.random() * 2,
+    }));
+  }, []);
+
   return (
     <div style={{ width: '100%', height: '100%', background: 'linear-gradient(to bottom, #1e3a8a, #1e40af)', position: 'relative', overflow: 'hidden', borderRadius: '0 24px 24px 0' }}>
       {/* Stars */}
-      {[...Array(12)].map((_, i) => (
+      {starsData.map((star, i) => (
         <motion.div
-          key={i}
-          style={{
-            position: 'absolute',
-            width: '4px', height: '4px', background: 'white', borderRadius: '50%',
-            top: `${5 + Math.random() * 30}%`,
-            left: `${5 + Math.random() * 90}%`,
-          }}
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{
-            duration: 2 + Math.random() * 2,
-            repeat: Infinity,
-            delay: Math.random() * 2,
-          }}
+           key={i}
+           style={{
+             position: 'absolute',
+             width: '4px', height: '4px', background: 'white', borderRadius: '50%',
+             top: star.top,
+             left: star.left,
+           }}
+           animate={{ opacity: [0.3, 1, 0.3] }}
+           transition={{
+             duration: star.duration,
+             repeat: Infinity,
+             delay: star.delay,
+           }}
         />
       ))}
 

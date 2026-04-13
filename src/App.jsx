@@ -108,7 +108,7 @@ const KitBotAssistant = ({ isConnected, onClick }) => {
         padding: '8px 16px', 
         borderRadius: '20px', 
         background: isConnected ? '#f0fdf4' : '#f7f7f7',
-        border: `2px solid ${isConnected ? '#58cc02' : '#e5e5e5'}`,
+        border: `2px solid ${isConnected ? '#0ea5e9' : '#e5e5e5'}`,
         cursor: 'pointer',
         transition: 'all 0.3s ease'
       }}
@@ -121,13 +121,13 @@ const KitBotAssistant = ({ isConnected, onClick }) => {
             position: 'absolute', 
             top: -2, left: -2, right: -2, bottom: -2, 
             borderRadius: '50%', 
-            background: isConnected ? '#58cc02' : 'transparent' 
+            background: isConnected ? '#0ea5e9' : 'transparent' 
           }}
         />
         <div style={{ 
           width: '32px', height: '32px', 
           borderRadius: '50%', 
-          background: isConnected ? '#58cc02' : '#ccc', 
+          background: isConnected ? '#0ea5e9' : '#ccc', 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           position: 'relative', zIndex: 1
         }}>
@@ -135,7 +135,7 @@ const KitBotAssistant = ({ isConnected, onClick }) => {
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <span style={{ fontSize: '0.7rem', fontWeight: '900', color: isConnected ? '#58cc02' : '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <span style={{ fontSize: '0.7rem', fontWeight: '900', color: isConnected ? '#0ea5e9' : '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {isConnected ? '¡Kit Despierto!' : 'Kit Durmiendo'}
         </span>
         <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#4b4b4b' }}>
@@ -165,7 +165,7 @@ const MissionStatus = ({ pinStates, isConnected }) => {
           <motion.div 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            style={{ position: 'absolute', bottom: -5, right: -5, background: '#58cc02', width: '22px', height: '22px', borderRadius: '50%', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ position: 'absolute', bottom: -5, right: -5, background: '#0ea5e9', width: '22px', height: '22px', borderRadius: '50%', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />
           </motion.div>
@@ -180,30 +180,67 @@ const MissionStatus = ({ pinStates, isConnected }) => {
 };
 
 const LevelMap = ({ onSelectLevel, levels }) => {
+  const getOffset = (index) => Math.sin(index * 1.8) * 70; // Generates a zig-zag wavy offset
+
   return (
-    <div className="level-path">
-      <header style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
-        <h1 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>Aventura Arduino</h1>
-        <p style={{ color: '#777', maxWidth: '600px', margin: '0 auto' }}>¡Sigue el camino para convertirte en un Maestro Maker!</p>
+    <div className="level-path" style={{ position: 'relative', minHeight: '80vh', overflow: 'hidden' }}>
+      {/* Background playful elements */}
+      <motion.div animate={{ y: [0, -15, 0], rotate: [-2, 2, -2] }} transition={{ duration: 6, repeat: Infinity }} style={{ position: 'absolute', top: '15%', left: '10%', fontSize: '4rem', opacity: 0.4 }}>☁️</motion.div>
+      <motion.div animate={{ y: [0, 20, 0], rotate: [2, -2, 2] }} transition={{ duration: 5, repeat: Infinity }} style={{ position: 'absolute', top: '45%', right: '12%', fontSize: '3rem', opacity: 0.4 }}>☁️</motion.div>
+      <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity }} style={{ position: 'absolute', bottom: '10%', left: '15%', fontSize: '2rem', opacity: 0.5 }}>✨</motion.div>
+      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 3, repeat: Infinity }} style={{ position: 'absolute', top: '25%', right: '25%', fontSize: '1.5rem', opacity: 0.6 }}>⭐</motion.div>
+
+      <header style={{ textAlign: 'center', marginBottom: '50px', position: 'relative', zIndex: 10 }}>
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring' }}>
+           <h1 style={{ fontFamily: 'var(--font-playful)', fontSize: '3.5rem', color: 'var(--primary)', marginBottom: '10px', textShadow: '0 4px 0 var(--primary-shadow)' }}>Aventura Maker</h1>
+           <p style={{ color: '#777', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto', fontWeight: 'bold' }}>¡Sigue el camino para convertirte en un Maestro Maker!</p>
+        </motion.div>
       </header>
       
-      {levels.map((level, index) => (
-        <div key={level.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <motion.div 
-            whileHover={{ scale: level.locked ? 1 : 1.1 }}
-            className={`level-node ${level.completed ? 'completed' : ''} ${level.locked ? 'locked' : ''}`}
-            onClick={() => !level.locked && onSelectLevel(level)}
-          >
-            {level.locked ? <Settings size={32} /> : level.id}
-          </motion.div>
-          <span style={{ marginTop: '10px', fontWeight: '800', fontFamily: 'var(--font-playful)', color: '#4b4b4b' }}>
-            {level.title}
-          </span>
-          {index < levels.length - 1 && (
-            <div style={{ width: '8px', height: '40px', background: '#e5e5e5', borderRadius: '4px', margin: '10px 0' }} />
-          )}
-        </div>
-      ))}
+      {levels.map((level, index) => {
+        const currentOffset = getOffset(index);
+        const nextOffset = index < levels.length - 1 ? getOffset(index + 1) : 0;
+        
+        return (
+          <div key={level.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
+            <motion.div 
+              whileHover={{ scale: level.locked ? 1 : 1.15, rotate: level.locked ? 0 : [0, -5, 5, 0] }}
+              initial={{ y: 50, opacity: 0, x: currentOffset }}
+              animate={{ y: 0, opacity: 1, x: currentOffset }}
+              transition={{ delay: index * 0.1, type: 'spring' }}
+              className={`level-node ${level.completed ? 'completed' : ''} ${level.locked ? 'locked' : ''}`}
+              onClick={() => !level.locked && onSelectLevel(level)}
+            >
+              {level.locked ? <span style={{ fontSize: '2rem' }}>🔒</span> : (level.completed ? <span style={{ fontSize: '2rem' }}>⭐</span> : <span style={{ fontSize: '2rem', fontWeight: 900 }}>{level.id}</span>)}
+            </motion.div>
+            
+            <motion.span 
+              initial={{ opacity: 0, x: currentOffset }}
+              animate={{ opacity: 1, x: currentOffset }}
+              transition={{ delay: index * 0.1 + 0.2 }}
+              style={{ marginTop: '12px', fontWeight: '900', fontFamily: 'var(--font-playful)', color: '#4b4b4b', fontSize: '1.2rem', textTransform: 'uppercase' }}
+            >
+              {level.title}
+            </motion.span>
+            
+            {index < levels.length - 1 && (
+              <svg width="200" height="70" style={{ margin: '5px 0', overflow: 'visible' }}>
+                <motion.path 
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1, delay: 0.5 + index * 0.2 }}
+                  d={`M ${100 + currentOffset} 0 C ${100 + currentOffset} 35, ${100 + nextOffset} 35, ${100 + nextOffset} 70`} 
+                  stroke={level.completed ? "var(--primary)" : "#e2e8f0"} 
+                  strokeWidth="12" 
+                  strokeLinecap="round"
+                  strokeDasharray="1 24"
+                  fill="none" 
+                />
+              </svg>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -214,6 +251,7 @@ export default function App() {
   const [view, setView] = useState('map');
   const [currentLevel, setCurrentLevel] = useState(null);
   const [pinStates, setPinStates] = useState({ 13: false });
+  const [runId, setRunId] = useState(0);
   const [activeModal, setActiveModal] = useState(null); // 'success', 'error', 'kit-wizard', 'adult-setup'
   const blocklyDiv = useRef(null);
   const workspace = useRef(null);
@@ -372,18 +410,25 @@ export default function App() {
         grid: { spacing: 25, length: 3, colour: '#eee', snap: true },
         trashcan: true,
         move: { scrollbars: false, drag: true, wheel: true },
-        zoom: { controls: true, wheel: true, startScale: 1.1 },
+        zoom: { controls: true, wheel: true, startScale: 1.6 },
         theme: Blockly.Themes.Classic
       });
 
       const defaultXml = `
         <xml xmlns="https://developers.google.com/blockly/xml">
-          <block type="arduino_setup" x="150" y="50" deletable="false" movable="true"></block>
-          <block type="arduino_loop" x="150" y="250" deletable="false" movable="true"></block>
+          <block type="arduino_setup" x="120" y="60" deletable="false" movable="true"></block>
+          <block type="arduino_loop" x="120" y="240" deletable="false" movable="true"></block>
         </xml>
       `;
       Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(defaultXml), workspace.current);
       Blockly.svgResize(workspace.current);
+      
+      // Center the view on the blocks to make it easy for children
+      setTimeout(() => {
+        if (workspace.current) {
+          workspace.current.scrollCenter();
+        }
+      }, 50);
     } catch (err) { console.error(err); }
   };
 
@@ -419,6 +464,17 @@ export default function App() {
 
   const runCode = async () => {
     if (!workspace.current) return;
+    
+    // Force reset simulation state for a clean preview run
+    setRunId(prev => prev + 1);
+    setPinStates({ 13: false });
+    
+    // Reset hardware if connected
+    if (isConnected && serialWriter.current) {
+      await sendSerial("L13");
+      await new Promise(r => setTimeout(r, 200));
+    }
+    
     const allBlocks = workspace.current.getAllBlocks(false);
     const setupBlock = allBlocks.find(b => b.type === 'arduino_setup');
     const loopBlock = allBlocks.find(b => b.type === 'arduino_loop');
@@ -535,7 +591,7 @@ export default function App() {
         borderBottom: '2px solid #e5e5e5'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ background: 'var(--primary)', padding: '10px 14px', borderRadius: '12px', color: 'white', fontWeight: 'bold', fontSize: '1.4rem', boxShadow: '0 4px 0 #46a302' }}>HB!</div>
+          <div style={{ background: 'var(--primary)', padding: '10px 14px', borderRadius: '12px', color: 'white', fontWeight: 'bold', fontSize: '1.4rem', boxShadow: '0 4px 0 #0284c7' }}>HB!</div>
           <h2 style={{ color: 'var(--secondary)', fontSize: '1.5rem', letterSpacing: '-1px', fontWeight: 900 }}>HELLO, BLOCKS! <span style={{ color: 'var(--primary)', fontSize: '0.8rem', verticalAlign: 'middle', marginLeft: '5px' }}>KIDS</span></h2>
         </div>
         
@@ -566,25 +622,55 @@ export default function App() {
               {/* Top Bar for Editor */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', position: 'relative', zIndex: 9999 }}>
                 
+                {infoExpanded && (
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                    onClick={() => setInfoExpanded(false)}
+                  />
+                )}
+
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                   <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer' }}>
                     <ArrowLeft size={14} /> MAPA
                   </button>
                   
                   <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
-                    <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 30px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #46a302' }}>
+                    <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 30px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #0284c7' }}>
                       <HelpCircle size={20} /> MISIÓN: {currentLevel?.title} {infoExpanded ? '▲' : '▼'}
                     </button>
                     
                     <AnimatePresence>
                       {infoExpanded && (
-                        <motion.div initial={{ opacity: 0, y: -10, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: -10, x: "-50%" }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', width: '450px', background: 'white', border: '2px solid #e5e5e5', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-                          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--secondary)', fontWeight: '900', letterSpacing: '1px' }}>RETO {currentLevel?.id}</span>
-                          <div style={{ background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)', padding: '20px', borderRadius: '20px', border: '2px solid #e1f0ff', marginTop: '15px', marginBottom: '20px' }}>
-                            <p style={{ color: '#4b4b4b', fontWeight: '500', lineHeight: 1.5, margin: 0 }}>{currentLevel?.riddle}</p>
-                          </div>
-                          <MissionStatus pinStates={pinStates} isConnected={isConnected} />
-                        </motion.div>
+                        <>
+                          <div
+                            style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                            onClick={() => setInfoExpanded(false)}
+                          />
+                          <motion.div initial={{ opacity: 0, y: -10, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: -10, x: "-50%" }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', width: '550px', background: 'white', border: '4px solid var(--secondary)', borderRadius: '32px', padding: '30px', boxShadow: '0 15px 40px rgba(0,0,0,0.15)', zIndex: 9999 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                              <div style={{ background: 'var(--primary)', color: 'white', minWidth: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', boxShadow: '0 4px 0 #0284c7' }}>
+                                {currentLevel?.id}
+                              </div>
+                              <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '2rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.1 }}>
+                                {currentLevel?.id === 1 ? '¡El Barco en la Niebla! 🚢' : currentLevel?.id === 2 ? '¡Luz de Estrella! 🌟' : '¡Misión Helicóptero! 🚁'}
+                              </h3>
+                            </div>
+                            
+                            <div style={{ background: '#f8fafc', padding: '25px', borderRadius: '24px', border: '3px dashed #cbd5e1', marginBottom: '25px' }}>
+                              <p style={{ fontFamily: 'var(--font-playful)', color: '#334155', fontSize: '1.3rem', lineHeight: 1.4, margin: 0 }}>
+                                {currentLevel?.riddle}
+                              </p>
+                            </div>
+                            
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                              <MissionStatus pinStates={pinStates} isConnected={isConnected} />
+                            </div>
+                            
+                            <button className="primary" style={{ width: '100%', padding: '16px', fontSize: '1.3rem', marginTop: '20px' }} onClick={() => setInfoExpanded(false)}>
+                              ¡ENTENDIDO, A PROGRAMAR! 🚀
+                            </button>
+                          </motion.div>
+                        </>
                       )}
                     </AnimatePresence>
                   </div>
@@ -612,9 +698,9 @@ export default function App() {
                 {/* Simulator Area */}
                 <div style={{ flex: 2, background: '#e0f2fe', position: 'relative', zIndex: 1 }}>
                   {currentLevel?.id === 3 ? (
-                    <HelicopterScene pinStates={pinStates} />
+                    <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} />
                   ) : (
-                    <LighthouseScene pinStates={pinStates} />
+                    <LighthouseScene key={`light-${runId}`} pinStates={pinStates} />
                   )}
                 </div>
               </div>
@@ -623,15 +709,22 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {hintVisible && view === 'editor' && currentLevel && (
+        <div 
+          style={{ position: 'fixed', inset: 0, zIndex: 1999 }}
+          onClick={() => setHintVisible(false)}
+        />
+      )}
+      
       {/* Global Mascot Helper */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pointerEvents: 'none' }}>
         <AnimatePresence>
           {hintVisible && view === 'editor' && currentLevel && (
             <motion.div 
               initial={{ opacity: 0, y: 10, scale: 0.9 }} 
               animate={{ opacity: 1, y: 0, scale: 1 }} 
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              style={{ background: 'white', padding: '20px', borderRadius: '24px', borderBottomRightRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', border: '3px solid var(--primary)', maxWidth: '280px', pointerEvents: 'auto' }}
+              style={{ background: 'white', padding: '20px', borderRadius: '24px', borderBottomLeftRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', border: '3px solid var(--primary)', maxWidth: '280px', pointerEvents: 'auto' }}
             >
               <div style={{ fontSize: '1.1rem', marginBottom: '6px' }}>💡 Pista de KitBot:</div>
               <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4, margin: 0 }}>Prueba a usar <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
@@ -657,10 +750,10 @@ export default function App() {
 
       {/* Modals Container */}
       <AnimatePresence>
-        {activeModal && (
-          <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+        {activeModal && activeModal !== 'success' && (
+          <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }} onClick={() => setActiveModal(null)}>
             
-            <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
+            <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
 
               {/* ERROR MODAL */}
               {activeModal === 'error' && (
@@ -668,7 +761,7 @@ export default function App() {
                   <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🤔</div>
                   <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: '#ff4b4b', marginBottom: '10px' }}>¡CASI!</h2>
                   <p style={{ fontSize: '1.2rem', color: '#777', marginBottom: '30px' }}>Algo no ha salido bien. ¿Quieres ver una pista de KitBot?</p>
-                  <button className="primary" style={{ width: '100%', background: '#ff4b4b', marginBottom: '10px' }} onClick={() => setActiveModal(null)}>REVISAR BLOQUES</button>
+                  <button className="primary" style={{ width: '100%', background: '#ff4b4b', boxShadow: '0 4px 0 #cc0000', marginBottom: '10px' }} onClick={() => setActiveModal(null)}>REVISAR BLOQUES</button>
                   <button style={{ color: '#999', fontWeight: 'bold', background: 'none', border: 'none' }} onClick={() => { setActiveModal(null); setHintVisible(true); }}>SÍ, NECESITO UNA PISTA 💡</button>
                 </>
               )}
@@ -679,7 +772,7 @@ export default function App() {
                   <div style={{ fontSize: '6rem', marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
                     <motion.div animate={{ x: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Monitor size={80} color="#1cb0f6" /></motion.div>
                     <Link size={40} color="#ccc" style={{ alignSelf: 'center' }} />
-                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1 }}><Cpu size={80} color="#58cc02" /></motion.div>
+                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1 }}><Cpu size={80} color="#0ea5e9" /></motion.div>
                   </div>
                   <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '15px' }}>¡Despierta a KitBot!</h2>
                   <p style={{ fontSize: '1.1rem', color: '#777', marginBottom: '30px', lineHeight: 1.5 }}>Conecta el cable de tu Kit Cirkids al ordenador y pulsa el botón mágico para empezar a jugar.</p>
