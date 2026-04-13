@@ -370,7 +370,7 @@ export default function App() {
         toolbox: { kind: 'flyoutToolbox', contents: toolboxBlocks },
         grid: { spacing: 25, length: 3, colour: '#eee', snap: true },
         trashcan: true,
-        move: { scrollbars: true, drag: true, wheel: true },
+        move: { scrollbars: false, drag: true, wheel: true },
         zoom: { controls: true, wheel: true, startScale: 1.1 },
         theme: Blockly.Themes.Classic
       });
@@ -489,7 +489,7 @@ export default function App() {
             <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#fff' }}>
               
               {/* Top Bar for Editor */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', zIndex: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', position: 'relative', zIndex: 9999 }}>
                 
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                   <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer' }}>
