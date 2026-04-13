@@ -491,6 +491,13 @@ export default function App() {
               {/* Top Bar for Editor */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', position: 'relative', zIndex: 9999 }}>
                 
+                {infoExpanded && (
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                    onClick={() => setInfoExpanded(false)}
+                  />
+                )}
+
                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                   <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer' }}>
                     <ArrowLeft size={14} /> MAPA
@@ -542,15 +549,22 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {hintVisible && view === 'editor' && currentLevel && (
+        <div 
+          style={{ position: 'fixed', inset: 0, zIndex: 1999 }}
+          onClick={() => setHintVisible(false)}
+        />
+      )}
+      
       {/* Global Mascot Helper */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pointerEvents: 'none' }}>
         <AnimatePresence>
           {hintVisible && view === 'editor' && currentLevel && (
             <motion.div 
               initial={{ opacity: 0, y: 10, scale: 0.9 }} 
               animate={{ opacity: 1, y: 0, scale: 1 }} 
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              style={{ background: 'white', padding: '20px', borderRadius: '24px', borderBottomRightRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', border: '3px solid var(--primary)', maxWidth: '280px', pointerEvents: 'auto' }}
+              style={{ background: 'white', padding: '20px', borderRadius: '24px', borderBottomLeftRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', border: '3px solid var(--primary)', maxWidth: '280px', pointerEvents: 'auto' }}
             >
               <div style={{ fontSize: '1.1rem', marginBottom: '6px' }}>💡 Pista de KitBot:</div>
               <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4, margin: 0 }}>Prueba a usar <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
@@ -576,10 +590,10 @@ export default function App() {
 
       {/* Modals Container */}
       <AnimatePresence>
-        {activeModal && (
-          <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+        {activeModal && activeModal !== 'success' && (
+          <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }} onClick={() => setActiveModal(null)}>
             
-            <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
+            <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
 
               {/* ERROR MODAL */}
               {activeModal === 'error' && (
@@ -587,7 +601,7 @@ export default function App() {
                   <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🤔</div>
                   <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: '#ff4b4b', marginBottom: '10px' }}>¡CASI!</h2>
                   <p style={{ fontSize: '1.2rem', color: '#777', marginBottom: '30px' }}>Algo no ha salido bien. ¿Quieres ver una pista de KitBot?</p>
-                  <button className="primary" style={{ width: '100%', background: '#ff4b4b', marginBottom: '10px' }} onClick={() => setActiveModal(null)}>REVISAR BLOQUES</button>
+                  <button className="primary" style={{ width: '100%', background: '#ff4b4b', boxShadow: '0 4px 0 #cc0000', marginBottom: '10px' }} onClick={() => setActiveModal(null)}>REVISAR BLOQUES</button>
                   <button style={{ color: '#999', fontWeight: 'bold', background: 'none', border: 'none' }} onClick={() => { setActiveModal(null); setHintVisible(true); }}>SÍ, NECESITO UNA PISTA 💡</button>
                 </>
               )}
