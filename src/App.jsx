@@ -1202,6 +1202,7 @@ export default function App() {
 
       {pinModalOpen && (
         <PinModal
+          isOpen={pinModalOpen}
           onClose={() => setPinModalOpen(false)}
           onValidate={handleValidateTeacherPin}
         />
