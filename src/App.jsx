@@ -152,7 +152,7 @@ const KitBotAssistant = ({ isConnected, onClick }) => {
           {isConnected ? '¡Kit Despierto!' : 'Kit Durmiendo'}
         </span>
         <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#4b4b4b' }}>
-          {isConnected ? '¡Hola, Amigo! 😍' : 'Tócame para hablar 😴'}
+          {isConnected ? '¡Hola, Amigo! 😍' : '¡Clic para conectar!'}
         </span>
       </div>
     </motion.div>
