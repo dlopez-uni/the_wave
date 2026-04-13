@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const HelicopterScene = ({ pinStates }) => {
-  // En the_wave, el pin 13 enciende el simulador por ahora
-  const fanRunning = pinStates[13] || false;
+const HelicopterScene = ({ pinStates, isSimulating }) => {
+  // Solo vuela si estamos en simulación y el pin 13 está activo
+  const fanRunning = isSimulating && (pinStates[13] || false);
 
   const bladeSpeed = useMemo(() => {
     return fanRunning ? 0.3 : 0;

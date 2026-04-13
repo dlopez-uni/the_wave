@@ -275,6 +275,7 @@ export default function App() {
   const [currentLevel, setCurrentLevel] = useState(null);
   const [levels, setLevels] = useState(getDefaultLevels());
   const [pinStates, setPinStates] = useState({ 13: false });
+  const [isSimulating, setIsSimulating] = useState(false);
   const [runId, setRunId] = useState(0);
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'success', 'error', 'kit-wizard', 'adult-setup', 'code-preview'
@@ -318,6 +319,7 @@ export default function App() {
     setHintVisible(false);
     setInfoExpanded(false);
     setPinStates({ 13: false });
+    setIsSimulating(false);
     setView('map');
     touchProfile(profile.id);
   };
@@ -663,6 +665,7 @@ export default function App() {
   const runCode = async () => {
     if (!workspace.current) return;
     
+    setIsSimulating(true);
     // Force reset simulation state for a clean preview run
     setRunId(prev => prev + 1);
     setPinStates({ 13: false });
@@ -681,24 +684,32 @@ export default function App() {
     const loopBlock = allBlocks.find(b => b.type === 'arduino_loop');
 
     let missionSuccess = false;
-    if (setupBlock) {
-      let block = setupBlock.getInputTargetBlock('STACK');
-      while (block) {
-        if (block.type === currentLevel.target) missionSuccess = true;
-        await executeBlock(block);
-        block = block.getNextBlock();
-      }
-    }
-    if (loopBlock) {
-      // Para simulación, repetimos el loop 3 veces para que se vea el efecto
-      for (let i = 0; i < 3; i++) {
-        let block = loopBlock.getInputTargetBlock('STACK');
+    try {
+      if (setupBlock) {
+        let block = setupBlock.getInputTargetBlock('STACK');
         while (block) {
           if (block.type === currentLevel.target) missionSuccess = true;
           await executeBlock(block);
           block = block.getNextBlock();
         }
       }
+      if (loopBlock) {
+        // Para simulación, repetimos el loop 3 veces para que se vea el efecto
+        for (let i = 0; i < 3; i++) {
+          let block = loopBlock.getInputTargetBlock('STACK');
+          while (block) {
+            if (block.type === currentLevel.target) missionSuccess = true;
+            await executeBlock(block);
+            block = block.getNextBlock();
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error during simulation:", err);
+    } finally {
+      setIsSimulating(false);
+      // Optional: reset pinStates after simulation to ensure things return to "idle"
+      setPinStates({ 13: false });
     }
     
     setTimeout(() => {
@@ -1016,9 +1027,9 @@ export default function App() {
                       </pre>
                     </div>
                   ) : currentLevel?.id >= 2 ? (
-                    <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} />
+                    <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />
                   ) : (
-                    <LighthouseScene key={`light-${runId}`} pinStates={pinStates} />
+                    <LighthouseScene key={`light-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />
                   )}
                 </div>
               </div>
