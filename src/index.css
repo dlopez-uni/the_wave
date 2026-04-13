@@ -63,6 +63,30 @@ button.secondary:active {
   transform: translateY(4px);
 }
 
+button.outline {
+  background: white;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 0 #e2e8f0;
+}
+
+button.outline:active {
+  box-shadow: 0 0 0 #e2e8f0;
+  transform: translateY(4px);
+}
+
+button.outline-dark {
+  background: #f0f0f0;
+  color: #555;
+  border: 2px solid #ccc;
+  box-shadow: 0 4px 0 #ccc;
+}
+
+button.outline-dark:active {
+  box-shadow: 0 0 0 #ccc;
+  transform: translateY(4px);
+}
+
 /* Glassmorphism utility */
 .glass {
   background: rgba(255, 255, 255, 0.8);

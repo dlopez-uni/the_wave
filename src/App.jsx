@@ -19,7 +19,9 @@ import {
   Plug,
   Info,
   ChevronRight,
-  Monitor
+  Monitor,
+  Code,
+  EyeOff
 } from 'lucide-react';
 import * as Blockly from 'blockly';
 import 'blockly/blocks';
@@ -263,6 +265,7 @@ export default function App() {
   const workspace = useRef(null);
   const [hintVisible, setHintVisible] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
+  const [showCodeInSim, setShowCodeInSim] = useState(false);
   
   // AI States
   const [aiHint, setAiHint] = useState('');
@@ -668,8 +671,10 @@ export default function App() {
   };
 
   const showCodePreview = () => {
-    generateArduinoCode();
-    setActiveModal('code-preview');
+    if (!showCodeInSim) {
+      generateArduinoCode();
+    }
+    setShowCodeInSim(!showCodeInSim);
   };
 
   const uploadToArduino = async () => {
@@ -808,12 +813,8 @@ export default function App() {
                     </AnimatePresence>
                   </div>
                 </div>
-
                 <div style={{display: 'flex', gap: '10px'}}>
-                  <button style={{ padding: '12px 20px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', color: '#64748b' }} onClick={showCodePreview}>
-                    <Monitor size={18} /> VER CÓDIGO
-                  </button>
-                  <button style={{ padding: '12px 20px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px', background: '#f0f0f0', border: '2px solid #ccc', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', color: '#555' }} onClick={uploadToArduino} disabled={isUploading}>
+                  <button className="outline-dark" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={uploadToArduino} disabled={isUploading}>
                     {isUploading ? <RotateCcw className="animate-spin" size={20} /> : <Cpu size={20} />} 
                     {isUploading ? 'SUBIENDO...' : 'CARGAR A PLACA'}
                   </button>
@@ -832,8 +833,20 @@ export default function App() {
                 </div>
 
                 {/* Simulator Area */}
-                <div style={{ flex: 2, background: '#e0f2fe', position: 'relative', zIndex: 1 }}>
-                  {currentLevel?.id === 3 ? (
+                <div style={{ flex: 2, background: showCodeInSim ? '#1e293b' : '#e0f2fe', position: 'relative', zIndex: 1 }}>
+                  <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 50 }}>
+                    <button className="glass outline" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', width: '45px', height: '45px', borderRadius: '12px', background: showCodeInSim ? '#334155' : 'white', border: showCodeInSim ? '2px solid #475569' : '2px solid #e2e8f0', boxShadow: showCodeInSim ? '0 4px 0 #1e293b' : '0 4px 0 #e2e8f0' }} onClick={showCodePreview} title={showCodeInSim ? "Ocultar Código" : "Ver el Código del Inventor"}>
+                      {showCodeInSim ? <EyeOff size={22} color="#94a3b8" /> : <Code size={22} color="#0ea5e9" />}
+                    </button>
+                  </div>
+                  {showCodeInSim ? (
+                    <div style={{ padding: '80px 40px 40px', height: '100%', overflowY: 'auto' }}>
+                      <h3 style={{ color: '#38bdf8', fontFamily: 'var(--font-playful)', fontSize: '2rem', marginBottom: '20px' }}>Código del Inventor 🤖</h3>
+                      <pre style={{ color: '#f8fafc', fontSize: '1.1rem', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                        {generatedCode}
+                      </pre>
+                    </div>
+                  ) : currentLevel?.id === 3 ? (
                     <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} />
                   ) : (
                     <LighthouseScene key={`light-${runId}`} pinStates={pinStates} />
