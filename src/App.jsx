@@ -32,6 +32,12 @@ import CharacterMascot from './components/CharacterMascot';
 import CompletionModal from './components/CompletionModal';
 import HelicopterScene from './components/HelicopterScene';
 import LighthouseScene from './components/LighthouseScene';
+import LandingPage from './components/LandingPage';
+import PinModal from './components/PinModal';
+import TeacherDashboard from './components/TeacherDashboard';
+import { getDefaultLevels } from './data/defaultLevels';
+import { getAvatarById } from './data/avatars';
+import { MAX_PROFILES, useAppData } from './hooks/useStorage';
 
 // AI Utilities
 import { getMissionHint } from './mistralApi';
@@ -255,10 +261,27 @@ const LevelMap = ({ onSelectLevel, levels }) => {
 // --- Main App ---
 
 export default function App() {
-  const [view, setView] = useState('map');
+  const {
+    appData,
+    ready,
+    profiles,
+    createProfile,
+    deleteProfile,
+    resetProfileProgress,
+    touchProfile,
+    setProfileLevels,
+    updateTeacherPin,
+    exportJSON,
+    importJSON,
+  } = useAppData();
+
+  const [view, setView] = useState('landing');
+  const [activeProfile, setActiveProfile] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(null);
+  const [levels, setLevels] = useState(getDefaultLevels());
   const [pinStates, setPinStates] = useState({ 13: false });
   const [runId, setRunId] = useState(0);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'success', 'error', 'kit-wizard', 'adult-setup', 'code-preview'
   const [generatedCode, setGeneratedCode] = useState('');
   const blocklyDiv = useRef(null);
@@ -281,35 +304,112 @@ export default function App() {
   const serialPort = useRef(null);
   const serialWriter = useRef(null);
 
-  const [levels, setLevels] = useState([
-    { 
-      id: 1, 
-      title: 'El Gran Comienzo', 
-      riddle: '¡Hola Inventor! Un barco se acerca a la costa en la niebla. Tu primera misión es encender la luz del faro usando el módulo LED.', 
-      allowedBlocks: ['arduino_led_on'],
-      target: 'arduino_led_on',
-      completed: false,
-      locked: false 
-    },
-    { 
-      id: 2, 
-      title: 'Señales de Alerta', 
-      riddle: '¡Genial! Ahora debemos probar el sistema de luces del helicóptero haciéndolo parpadear como alerta: enciende, espera y apaga.',
-      allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait'],
-      target: 'arduino_wait',
-      completed: false,
-      locked: true 
-    },
-    { 
-      id: 3, 
-      title: 'Despegue de Emergencia', 
-      riddle: '¡Nivel Experto! El helicóptero necesita un chequeo de seguridad. Usa un bloque LÓGICO (Si...) de la caja de herramientas, e introduce dentro el bloque de "Encender LED" para activar el motor principal.',
-      allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait', 'controls_if', 'logic_compare', 'logic_boolean'],
-      target: 'controls_if',
-      completed: false,
-      locked: true 
-    },
-  ]);
+  const activeAvatar = activeProfile ? getAvatarById(activeProfile.avatar) : null;
+
+  const getProgress = (profileLevels) => {
+    const safeLevels = Array.isArray(profileLevels) ? profileLevels : [];
+    const completed = safeLevels.filter((level) => level.completed).length;
+    const total = safeLevels.length || 1;
+    return { completed, total };
+  };
+
+  const activeProgress = getProgress(levels);
+
+  const handleSelectProfile = (profile) => {
+    const profileLevels = Array.isArray(profile.levels) ? profile.levels : getDefaultLevels();
+    setActiveProfile({ ...profile, levels: profileLevels, lastPlayedAt: Date.now() });
+    setLevels(profileLevels);
+    setCurrentLevel(null);
+    setHintVisible(false);
+    setInfoExpanded(false);
+    setPinStates({ 13: false });
+    setView('map');
+    touchProfile(profile.id);
+  };
+
+  const handleCreateProfile = ({ name, avatar }) => {
+    const nextProfile = createProfile(name, avatar);
+    handleSelectProfile(nextProfile);
+  };
+
+  const handleDeleteProfile = (profileId) => {
+    deleteProfile(profileId);
+    if (activeProfile?.id === profileId) {
+      setActiveProfile(null);
+      setLevels(getDefaultLevels());
+      setCurrentLevel(null);
+      setView('landing');
+    }
+  };
+
+  const handleResetProfile = (profileId) => {
+    resetProfileProgress(profileId);
+    if (activeProfile?.id === profileId) {
+      setLevels(getDefaultLevels());
+      setCurrentLevel(null);
+      setView('map');
+    }
+  };
+
+  const handleChangePin = (currentPin, nextPin) => {
+    if (currentPin !== appData.teacherPin) {
+      return { ok: false, message: 'El PIN actual es incorrecto.' };
+    }
+    try {
+      updateTeacherPin(nextPin);
+      return { ok: true, message: 'PIN actualizado correctamente.' };
+    } catch (error) {
+      return { ok: false, message: error.message || 'No se pudo cambiar el PIN.' };
+    }
+  };
+
+  const handleImportData = async (file) => {
+    await importJSON(file);
+    setActiveProfile(null);
+    setLevels(getDefaultLevels());
+    setCurrentLevel(null);
+    setView('landing');
+    setPinModalOpen(false);
+  };
+
+  const handleValidateTeacherPin = async (pin) => {
+    if (pin !== appData.teacherPin) {
+      return false;
+    }
+    setPinModalOpen(false);
+    setView('teacher');
+    return true;
+  };
+
+  useEffect(() => {
+    if (!activeProfile) {
+      return;
+    }
+
+    const freshProfile = profiles.find((profile) => profile.id === activeProfile.id);
+    if (!freshProfile) {
+      setActiveProfile(null);
+      setLevels(getDefaultLevels());
+      setCurrentLevel(null);
+      setView('landing');
+      return;
+    }
+
+    setActiveProfile(freshProfile);
+    setLevels(freshProfile.levels);
+    setCurrentLevel((previousLevel) => {
+      if (!previousLevel) {
+        return previousLevel;
+      }
+      return freshProfile.levels.find((level) => level.id === previousLevel.id) || null;
+    });
+  }, [profiles, activeProfile?.id]);
+
+  useEffect(() => {
+    if ((view === 'map' || view === 'editor') && !activeProfile) {
+      setView('landing');
+    }
+  }, [view, activeProfile]);
 
   // Handle Serial Operations
   const openPort = async (port) => {
@@ -720,6 +820,12 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#fcfcfc' }}>
+      {!ready ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'var(--font-playful)', fontSize: '1.3rem', color: '#4b4b4b' }}>
+          Cargando perfiles...
+        </div>
+      ) : (
+        <>
       
       {/* Header with KitBot */}
       <nav className="glass" style={{ 
@@ -737,27 +843,92 @@ export default function App() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-          <KitBotAssistant isConnected={isConnected} onClick={() => isConnected ? disconnectKit() : setActiveModal('kit-wizard')} />
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f7f7f7', padding: '8px 16px', borderRadius: '12px' }}>
-              <Zap size={20} color="#ffc800" fill="#ffc800" />
-              <span style={{ fontWeight: 'bold' }}>1,240 XP</span>
+          {(view === 'map' || view === 'editor') && (
+            <KitBotAssistant isConnected={isConnected} onClick={() => isConnected ? disconnectKit() : setActiveModal('kit-wizard')} />
+          )}
+
+          {activeProfile && (view === 'map' || view === 'editor') && (
+            <div className="active-profile-chip" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '6px 16px 6px 8px', borderRadius: '30px', border: '2px solid #e2e8f0' }}>
+              <span className="active-profile-avatar" style={{ fontSize: '1.5rem', background: 'white', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>{activeAvatar?.emoji}</span>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <strong style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1 }}>{activeProfile.name}</strong>
+                <small style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 'bold' }}>{activeProgress.completed}/{activeProgress.total} misiones</small>
+              </div>
             </div>
-            <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#1cb0f6', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 0 #1898d4' }}>
-              <User color="white" size={24} />
+          )}
+
+          {activeProfile && (view === 'map' || view === 'editor') && (
+            <button
+              type="button"
+              className="secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => {
+                setCurrentLevel(null);
+                setHintVisible(false);
+                setInfoExpanded(false);
+                setView('landing');
+              }}
+            >
+              Cambiar perfil
+            </button>
+          )}
+
+          {view === 'landing' && (
+            <div className="device-profile-count" style={{ color: '#64748b', fontWeight: 'bold', fontSize: '0.9rem' }}>
+              Perfiles guardados: {profiles.length}/{MAX_PROFILES}
             </div>
-          </div>
+          )}
+
+          {view === 'teacher' && (
+            <button
+              type="button"
+              className="secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => setView('landing')}
+            >
+              <ArrowLeft size={16} />
+              Salir del panel
+            </button>
+          )}
         </div>
       </nav>
 
       <main style={{ flex: 1, position: 'relative' }}>
         <AnimatePresence mode="wait">
-          {view === 'map' ? (
+          {view === 'landing' && (
+            <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="view-container">
+              <LandingPage
+                profiles={profiles}
+                maxProfiles={MAX_PROFILES}
+                onCreateProfile={handleCreateProfile}
+                onSelectProfile={handleSelectProfile}
+                onOpenTeacher={() => setPinModalOpen(true)}
+              />
+            </motion.div>
+          )}
+
+          {view === 'teacher' && (
+            <motion.div key="teacher" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="view-container">
+              <TeacherDashboard
+                profiles={profiles}
+                maxProfiles={MAX_PROFILES}
+                onBack={() => setView('landing')}
+                onResetProfile={handleResetProfile}
+                onDeleteProfile={handleDeleteProfile}
+                onChangePin={handleChangePin}
+                onExport={exportJSON}
+                onImport={handleImportData}
+              />
+            </motion.div>
+          )}
+
+          {view === 'map' && (
             <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="view-container">
               <LevelMap onSelectLevel={(level) => { setCurrentLevel(level); setView('editor'); }} levels={levels} />
             </motion.div>
-          ) : (
+          )}
+
+          {view === 'editor' && currentLevel && (
             <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#fff' }}>
               
               {/* Top Bar for Editor */}
@@ -975,6 +1146,15 @@ export default function App() {
         onNext={() => { setActiveModal(null); setView('map'); }}
         onRetry={() => { setActiveModal(null); }}
       />
+
+      {pinModalOpen && (
+        <PinModal
+          onClose={() => setPinModalOpen(false)}
+          onValidate={handleValidateTeacherPin}
+        />
+      )}
+      </>
+      )}
     </div>
   );
 }
