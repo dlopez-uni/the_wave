@@ -1073,10 +1073,10 @@ export default function App() {
                         {generatedCode}
                       </pre>
                     </div>
-                  ) : currentLevel?.id >= 2 ? (
-                    <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />
-                  ) : (
+                  ) : currentLevel?.id === 2 ? (
                     <LighthouseScene key={`light-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />
+                  ) : (
+                    <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />
                   )}
                 </div>
               </div>
