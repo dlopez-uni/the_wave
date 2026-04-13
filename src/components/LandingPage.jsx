@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Settings } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import CreateProfileModal from './CreateProfileModal';
 import { getAvatarById } from '../data/avatars';
 
@@ -14,7 +14,7 @@ const getProgress = (levels) => {
   };
 };
 
-const LandingPage = ({ profiles, maxProfiles, onCreateProfile, onSelectProfile, onOpenTeacher }) => {
+const LandingPage = ({ profiles, maxProfiles, onCreateProfile, onSelectProfile }) => {
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
@@ -25,13 +25,8 @@ const LandingPage = ({ profiles, maxProfiles, onCreateProfile, onSelectProfile, 
         className="landing-hero"
       >
         <h1>Elige tu partida</h1>
-        <p>Cada niño tiene su progreso guardado. Pulsa un avatar para continuar.</p>
+        <p>Pulsa un avatar para continuar.</p>
       </motion.div>
-
-      <button className="teacher-entry" onClick={onOpenTeacher}>
-        <Settings size={18} />
-        Profesores
-      </button>
 
       <div className="profiles-grid">
         {profiles.map((profile, index) => {

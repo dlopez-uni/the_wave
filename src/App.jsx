@@ -890,9 +890,12 @@ export default function App() {
         position: 'sticky', top: 0, zIndex: 100,
         borderBottom: '2px solid #e5e5e5'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ background: 'var(--primary)', padding: '10px 14px', borderRadius: '12px', color: 'white', fontWeight: 'bold', fontSize: '1.4rem', boxShadow: '0 4px 0 #0284c7' }}>HB!</div>
-          <h2 style={{ color: 'var(--secondary)', fontSize: '1.5rem', letterSpacing: '-1px', fontWeight: 900 }}>HELLO BLOCKS <span style={{ color: 'var(--primary)', fontSize: '0.8rem', verticalAlign: 'middle', marginLeft: '5px' }}>KIDS</span></h2>
+        <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '20px' }}>
+          <img
+            src="/codeblockskids.min.svg"
+            alt="Code Blocks Kids"
+            style={{ height: '56px', width: 'auto', display: 'block' }}
+          />
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
@@ -927,6 +930,18 @@ export default function App() {
           )}
 
           {view === 'landing' && (
+            <button
+              type="button"
+              className="secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              onClick={() => setPinModalOpen(true)}
+            >
+              <Settings size={16} />
+              Profesores
+            </button>
+          )}
+
+          {view === 'landing' && (
             <div className="device-profile-count" style={{ color: '#64748b', fontWeight: 'bold', fontSize: '0.9rem' }}>
               Perfiles guardados: {profiles.length}/{MAX_PROFILES}
             </div>
@@ -955,7 +970,6 @@ export default function App() {
                 maxProfiles={MAX_PROFILES}
                 onCreateProfile={handleCreateProfile}
                 onSelectProfile={handleSelectProfile}
-                onOpenTeacher={() => setPinModalOpen(true)}
               />
             </motion.div>
           )}
