@@ -1017,7 +1017,7 @@ export default function App() {
                                 {currentLevel?.id}
                               </div>
                               <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '2rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.1 }}>
-                                {currentLevel?.id === 1 ? '¡El Barco en la Niebla! 🚢' : currentLevel?.id === 2 ? '¡Señales de Alerta! 🚁' : '¡Despegue de Emergencia! 🚁'}
+                                {currentLevel?.title}
                               </h3>
                             </div>
                             
@@ -1025,10 +1025,6 @@ export default function App() {
                               <p style={{ fontFamily: 'var(--font-playful)', color: '#334155', fontSize: '1.3rem', lineHeight: 1.4, margin: 0 }}>
                                 {currentLevel?.riddle}
                               </p>
-                            </div>
-                            
-                            <div style={{ display: 'flex', justifyContent: 'center' }}>
-                              <MissionStatus pinStates={pinStates} isConnected={isConnected} />
                             </div>
                             
                             <button className="primary" style={{ width: '100%', padding: '16px', fontSize: '1.3rem', marginTop: '20px' }} onClick={() => setInfoExpanded(false)}>
