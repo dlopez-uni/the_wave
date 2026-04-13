@@ -257,6 +257,7 @@ export default function App() {
   const workspace = useRef(null);
   const [hintVisible, setHintVisible] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Serial State
   const [isConnected, setIsConnected] = useState(false);
@@ -502,6 +503,80 @@ export default function App() {
     }, 800);
   };
 
+  const generateArduinoCode = () => {
+    if (!workspace.current) return "";
+    const allBlocks = workspace.current.getAllBlocks(false);
+    const setupBlock = allBlocks.find(b => b.type === 'arduino_setup');
+    const loopBlock = allBlocks.find(b => b.type === 'arduino_loop');
+
+    let setupCode = "void setup() {\n  pinMode(13, OUTPUT);\n";
+    let loopCode = "void loop() {\n";
+
+    const getBlockCode = (block) => {
+      let code = "";
+      while (block) {
+        if (block.type === 'arduino_led_on') {
+          code += '  digitalWrite(13, HIGH);\n';
+        } else if (block.type === 'arduino_led_off') {
+          code += '  digitalWrite(13, LOW);\n';
+        } else if (block.type === 'arduino_wait') {
+          const seconds = parseFloat(block.getFieldValue('SECONDS')) || 1;
+          code += `  delay(${seconds * 1000});\n`;
+        } else if (block.type === 'controls_if') {
+          // Intentar obtener la condición si existe, si no usar true
+          let condition = "true";
+          let condBlock = block.getInputTargetBlock('IF0');
+          if (condBlock && condBlock.type === 'logic_boolean') {
+             condition = condBlock.getFieldValue('BOOL').toLowerCase();
+          }
+          code += `  if (${condition}) {\n`;
+          let doBlock = block.getInputTargetBlock('DO0');
+          code += getBlockCode(doBlock);
+          code += `  }\n`;
+        }
+        block = block.getNextBlock();
+      }
+      return code;
+    };
+
+    if (setupBlock) {
+      setupCode += getBlockCode(setupBlock.getInputTargetBlock('STACK'));
+    }
+    if (loopBlock) {
+      loopCode += getBlockCode(loopBlock.getInputTargetBlock('STACK'));
+    }
+
+    setupCode += "}\n\n";
+    loopCode += "}\n";
+
+    return setupCode + loopCode;
+  };
+
+  const uploadToArduino = async () => {
+    const code = generateArduinoCode();
+    if (!code) return;
+    
+    setIsUploading(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert("Error: " + (data.error || 'Fallo de compilación'));
+      } else {
+        alert("¡Código subido a la placa con éxito! Tu arduino ahora se ejecutará automáticamente.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error de conexión con el backend local. Asegúrate de iniciar 'npm run dev' en la carpeta backend.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#fcfcfc' }}>
       
@@ -601,9 +676,15 @@ export default function App() {
                   </div>
                 </div>
 
-                <button className="primary" style={{ padding: '12px 30px', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={runCode}>
-                  <Play size={24} /> EMPEZAR RETO
-                </button>
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <button style={{ padding: '12px 20px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px', background: '#f0f0f0', border: '2px solid #ccc', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', color: '#555' }} onClick={uploadToArduino} disabled={isUploading}>
+                    {isUploading ? <RotateCcw className="animate-spin" size={20} /> : <Cpu size={20} />} 
+                    {isUploading ? 'SUBIENDO...' : 'CARGAR A PLACA'}
+                  </button>
+                  <button className="primary" style={{ padding: '12px 30px', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={runCode}>
+                    <Play size={24} /> EMPEZAR RETO
+                  </button>
+                </div>
               </div>
 
               {/* Split Work Region */}
