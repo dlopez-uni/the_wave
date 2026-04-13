@@ -25,6 +25,12 @@ import * as Blockly from 'blockly';
 import 'blockly/blocks';
 import Es from 'blockly/msg/es';
 
+// Components
+import CharacterMascot from './components/CharacterMascot';
+import CompletionModal from './components/CompletionModal';
+import HelicopterScene from './components/HelicopterScene';
+import LighthouseScene from './components/LighthouseScene';
+
 // Locale and Block Registration
 Blockly.setLocale(Es);
 
@@ -176,7 +182,7 @@ const MissionStatus = ({ pinStates, isConnected }) => {
 const LevelMap = ({ onSelectLevel, levels }) => {
   return (
     <div className="level-path">
-      <header style={{ textAlign: 'center', marginBottom: '40px' }}>
+      <header style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
         <h1 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>Aventura Arduino</h1>
         <p style={{ color: '#777', maxWidth: '600px', margin: '0 auto' }}>¡Sigue el camino para convertirte en un Maestro Maker!</p>
       </header>
@@ -212,6 +218,7 @@ export default function App() {
   const blocklyDiv = useRef(null);
   const workspace = useRef(null);
   const [hintVisible, setHintVisible] = useState(false);
+  const [infoExpanded, setInfoExpanded] = useState(false);
 
   // Serial State
   const [isConnected, setIsConnected] = useState(false);
@@ -222,7 +229,7 @@ export default function App() {
     { 
       id: 1, 
       title: 'El Gran Comienzo', 
-      riddle: '¡Hola Inventor! Tu primera misión es despertar al LED. ¿Puedes encender la luz?', 
+      riddle: '¡Hola Inventor! Un barco se acerca a la costa en la niebla. Tu primera misión es encender la luz del faro usando el módulo LED.', 
       allowedBlocks: ['arduino_led_on'],
       target: 'arduino_led_on',
       completed: false,
@@ -231,7 +238,7 @@ export default function App() {
     { 
       id: 2, 
       title: 'Luz Mágica', 
-      riddle: '¡Genial! Ahora haz que el LED parpadee como una estrella: enciende, espera y apaga.',
+      riddle: '¡Genial! Ahora haz que el faro parpadee como una estrella para guiar completamente al barco: enciende, espera y apaga.',
       allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait'],
       target: 'arduino_wait',
       completed: false,
@@ -239,8 +246,8 @@ export default function App() {
     },
     { 
       id: 3, 
-      title: 'Lógica Galáctica', 
-      riddle: '¡Nivel Experto! Usa la lógica para decidir cuándo brillar.',
+      title: 'Despegue de Emergencia', 
+      riddle: '¡Nivel Experto! El helicóptero necesita un chequeo de seguridad. Usa un bloque LÓGICO (Si...) de la caja de herramientas, e introduce dentro el bloque de "Encender LED" para activar el motor principal.',
       allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait', 'controls_if', 'logic_compare', 'logic_boolean'],
       target: 'controls_if',
       completed: false,
@@ -363,7 +370,7 @@ export default function App() {
         toolbox: { kind: 'flyoutToolbox', contents: toolboxBlocks },
         grid: { spacing: 25, length: 3, colour: '#eee', snap: true },
         trashcan: true,
-        move: { scrollbars: true, drag: true, wheel: true },
+        move: { scrollbars: false, drag: true, wheel: true },
         zoom: { controls: true, wheel: true, startScale: 1.1 },
         theme: Blockly.Themes.Classic
       });
@@ -381,6 +388,7 @@ export default function App() {
 
   useEffect(() => {
     if (view === 'editor') {
+      setInfoExpanded(true);
       const tid = setTimeout(injectBlockly, 500);
       return () => {
         clearTimeout(tid);
@@ -478,55 +486,93 @@ export default function App() {
               <LevelMap onSelectLevel={(level) => { setCurrentLevel(level); setView('editor'); }} levels={levels} />
             </motion.div>
           ) : (
-            <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', height: 'calc(100vh - 80px)', background: '#fff' }}>
+            <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#fff' }}>
               
-              {/* Mission Sidebar */}
-              <div style={{ width: '340px', background: 'white', borderRight: '2px solid #e5e5e5', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
-                <div style={{ padding: '30px', flex: 1, overflowY: 'auto' }}>
-                  <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', marginBottom: '30px', padding: '10px 14px', borderRadius: '12px' }}>
-                    <ArrowLeft size={14} /> MAPA DE AVENTURA
+              {/* Top Bar for Editor */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', position: 'relative', zIndex: 9999 }}>
+                
+                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                  <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer' }}>
+                    <ArrowLeft size={14} /> MAPA
                   </button>
                   
-                  <div style={{ marginBottom: '25px' }}>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--secondary)', fontWeight: '900', letterSpacing: '1px' }}>RETO {currentLevel?.id}</span>
-                    <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '2rem', marginTop: '6px', lineHeight: 1.1 }}>{currentLevel?.title}</h3>
+                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
+                    <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 30px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #46a302' }}>
+                      <HelpCircle size={20} /> MISIÓN: {currentLevel?.title} {infoExpanded ? '▲' : '▼'}
+                    </button>
+                    
+                    <AnimatePresence>
+                      {infoExpanded && (
+                        <motion.div initial={{ opacity: 0, y: -10, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: -10, x: "-50%" }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', width: '450px', background: 'white', border: '2px solid #e5e5e5', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--secondary)', fontWeight: '900', letterSpacing: '1px' }}>RETO {currentLevel?.id}</span>
+                          <div style={{ background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)', padding: '20px', borderRadius: '20px', border: '2px solid #e1f0ff', marginTop: '15px', marginBottom: '20px' }}>
+                            <p style={{ color: '#4b4b4b', fontWeight: '500', lineHeight: 1.5, margin: 0 }}>{currentLevel?.riddle}</p>
+                          </div>
+                          <MissionStatus pinStates={pinStates} isConnected={isConnected} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-
-                  <div style={{ background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)', padding: '25px', borderRadius: '28px', fontSize: '1rem', border: '2px solid #e1f0ff', marginBottom: '30px', position: 'relative' }}>
-                    <div style={{ position: 'absolute', top: '-12px', left: '25px', background: 'var(--secondary)', color: 'white', padding: '4px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '800' }}>MISIÓN</div>
-                    <p style={{ color: '#4b4b4b', fontWeight: '500', lineHeight: 1.5 }}>{currentLevel?.riddle}</p>
-                  </div>
-
-                  <MissionStatus pinStates={pinStates} isConnected={isConnected} />
                 </div>
-                
-                <div style={{ padding: '30px', background: 'white', borderTop: '2px solid #f0f0f0' }}>
-                  <button className="primary" style={{ width: '100%', padding: '20px', fontSize: '1.3rem' }} onClick={runCode}>
-                    <Play size={26} style={{ marginRight: '10px' }} /> EMPEZAR RETO
-                  </button>
-                </div>
+
+                <button className="primary" style={{ padding: '12px 30px', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={runCode}>
+                  <Play size={24} /> EMPEZAR RETO
+                </button>
               </div>
 
-              {/* Blockly Region */}
-              <div style={{ flex: 1, position: 'relative', background: '#fcfcfc' }}>
-                <div ref={blocklyDiv} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+              {/* Split Work Region */}
+              <div style={{ flex: 1, display: 'flex', background: '#fcfcfc', position: 'relative' }}>
                 
-                {/* Visual Hint Bubble */}
-                {hintVisible && (
-                  <motion.div 
-                    initial={{ scale: 0, y: 20 }} animate={{ scale: 1, y: 0 }}
-                    style={{ position: 'absolute', bottom: '100px', left: '40px', background: 'white', padding: '20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', border: '3px solid var(--accent)', maxWidth: '250px', zIndex: 100 }}
-                  >
-                    <div style={{ fontSize: '1.2rem', marginBottom: '8px' }}>💡 Pista de KitBot:</div>
-                    <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4 }}>Prueba a poner el bloque de <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
-                    <button onClick={() => setHintVisible(false)} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>¡Entendido!</button>
-                  </motion.div>
-                )}
+                {/* Blockly Area */}
+                <div style={{ flex: 3, position: 'relative' }}>
+                  <div ref={blocklyDiv} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+                </div>
+
+                {/* Simulator Area */}
+                <div style={{ flex: 2, background: '#e0f2fe', position: 'relative', zIndex: 1 }}>
+                  {currentLevel?.id === 3 ? (
+                    <HelicopterScene pinStates={pinStates} />
+                  ) : (
+                    <LighthouseScene pinStates={pinStates} />
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
+
+      {/* Global Mascot Helper */}
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pointerEvents: 'none' }}>
+        <AnimatePresence>
+          {hintVisible && view === 'editor' && currentLevel && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.9 }} 
+              animate={{ opacity: 1, y: 0, scale: 1 }} 
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              style={{ background: 'white', padding: '20px', borderRadius: '24px', borderBottomRightRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', border: '3px solid var(--primary)', maxWidth: '280px', pointerEvents: 'auto' }}
+            >
+              <div style={{ fontSize: '1.1rem', marginBottom: '6px' }}>💡 Pista de KitBot:</div>
+              <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4, margin: 0 }}>Prueba a usar <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setHintVisible(false); }} 
+                style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer', padding: 0 }}
+              >
+                ¡Entendido!
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <motion.div 
+          whileHover={{ scale: 1.05 }} 
+          whileTap={{ scale: 0.95 }}
+          onClick={() => view === 'editor' && setHintVisible(!hintVisible)} 
+          style={{ cursor: view === 'editor' ? 'pointer' : 'default', pointerEvents: 'auto' }}
+        >
+          <CharacterMascot size={120} emotion={hintVisible ? 'thinking' : 'happy'} speaking={hintVisible} />
+        </motion.div>
+      </div>
 
       {/* Modals Container */}
       <AnimatePresence>
@@ -534,16 +580,6 @@ export default function App() {
           <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
             
             <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
-              
-              {/* SUCCESS MODAL */}
-              {activeModal === 'success' && (
-                <>
-                  <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🏆</div>
-                  <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>¡BRUTAL!</h2>
-                  <p style={{ fontSize: '1.2rem', color: '#777', marginBottom: '30px' }}>Has superado el reto como un auténtico inventor.</p>
-                  <button className="primary" style={{ width: '100%' }} onClick={() => { setActiveModal(null); setView('map'); }}>SIGUIENTE AVENTURA</button>
-                </>
-              )}
 
               {/* ERROR MODAL */}
               {activeModal === 'error' && (
@@ -604,6 +640,16 @@ void loop() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modern Completion Modal */}
+      <CompletionModal 
+        isOpen={activeModal === 'success'}
+        missionTitle={currentLevel?.title || 'Misión Superada'}
+        completionMessage="Has superado el reto como un auténtico inventor. ¡Increíble! 🎉"
+        stars={3}
+        onNext={() => { setActiveModal(null); setView('map'); }}
+        onRetry={() => { setActiveModal(null); }}
+      />
     </div>
   );
 }
