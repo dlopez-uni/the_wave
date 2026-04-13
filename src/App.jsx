@@ -203,12 +203,7 @@ const LevelMap = ({ onSelectLevel, levels }) => {
       <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity }} style={{ position: 'absolute', bottom: '10%', left: '15%', fontSize: '2rem', opacity: 0.5 }}>✨</motion.div>
       <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 3, repeat: Infinity }} style={{ position: 'absolute', top: '25%', right: '25%', fontSize: '1.5rem', opacity: 0.6 }}>⭐</motion.div>
 
-      <header style={{ textAlign: 'center', marginBottom: '50px', position: 'relative', zIndex: 10 }}>
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring' }}>
-           <h1 style={{ fontFamily: 'var(--font-playful)', fontSize: '3.5rem', color: 'var(--primary)', marginBottom: '10px', textShadow: '0 4px 0 var(--primary-shadow)' }}>Aventura Maker</h1>
-           <p style={{ color: '#777', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto', fontWeight: 'bold' }}>¡Sigue el camino para convertirte en un Maestro Maker!</p>
-        </motion.div>
-      </header>
+
       
       {levels.map((level, index) => {
         const currentOffset = getOffset(index);
