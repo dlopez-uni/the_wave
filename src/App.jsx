@@ -1,0 +1,609 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Play, 
+  RotateCcw, 
+  Cpu, 
+  Map as MapIcon, 
+  User, 
+  Trophy, 
+  Zap,
+  ArrowLeft,
+  Settings,
+  HelpCircle,
+  AlertCircle,
+  Link,
+  Unlink,
+  ExternalLink,
+  Bot,
+  Plug,
+  Info,
+  ChevronRight,
+  Monitor
+} from 'lucide-react';
+import * as Blockly from 'blockly';
+import 'blockly/blocks';
+import Es from 'blockly/msg/es';
+
+// Locale and Block Registration
+Blockly.setLocale(Es);
+
+// Define Blocks Globally
+if (!Blockly.Blocks['arduino_setup']) {
+  Blockly.Blocks['arduino_setup'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Al empezar 🟢");
+      this.appendStatementInput("STACK").setCheck(null);
+      this.setColour("#58cc02");
+      this.setTooltip("Se ejecuta una vez al inicio");
+    }
+  };
+}
+
+if (!Blockly.Blocks['arduino_loop']) {
+  Blockly.Blocks['arduino_loop'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Siempre 🔄");
+      this.appendStatementInput("STACK").setCheck(null);
+      this.setColour("#1cb0f6");
+      this.setTooltip("Se ejecuta una y otra vez");
+    }
+  };
+}
+
+if (!Blockly.Blocks['arduino_led_on']) {
+  Blockly.Blocks['arduino_led_on'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Encender LED 💡");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour("#58cc02");
+    }
+  };
+}
+
+if (!Blockly.Blocks['arduino_led_off']) {
+  Blockly.Blocks['arduino_led_off'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Apagar LED 🌑");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour("#ff4b4b");
+    }
+  };
+}
+
+if (!Blockly.Blocks['arduino_wait']) {
+  Blockly.Blocks['arduino_wait'] = {
+    init: function() {
+      this.appendDummyInput()
+          .appendField("Esperar")
+          .appendField(new Blockly.FieldTextInput("1"), "SECONDS")
+          .appendField("segundos");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour("#ffc800");
+    }
+  };
+}
+
+// --- Components ---
+
+const KitBotAssistant = ({ isConnected, onClick }) => {
+  return (
+    <motion.div 
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px', 
+        padding: '8px 16px', 
+        borderRadius: '20px', 
+        background: isConnected ? '#f0fdf4' : '#f7f7f7',
+        border: `2px solid ${isConnected ? '#58cc02' : '#e5e5e5'}`,
+        cursor: 'pointer',
+        transition: 'all 0.3s ease'
+      }}
+    >
+      <div style={{ position: 'relative' }}>
+        <motion.div
+          animate={isConnected ? { scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] } : {}}
+          transition={{ repeat: Infinity, duration: 2 }}
+          style={{ 
+            position: 'absolute', 
+            top: -2, left: -2, right: -2, bottom: -2, 
+            borderRadius: '50%', 
+            background: isConnected ? '#58cc02' : 'transparent' 
+          }}
+        />
+        <div style={{ 
+          width: '32px', height: '32px', 
+          borderRadius: '50%', 
+          background: isConnected ? '#58cc02' : '#ccc', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          position: 'relative', zIndex: 1
+        }}>
+          {isConnected ? <Bot size={18} color="white" /> : <Bot size={18} color="#999" />}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <span style={{ fontSize: '0.7rem', fontWeight: '900', color: isConnected ? '#58cc02' : '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {isConnected ? '¡Kit Despierto!' : 'Kit Durmiendo'}
+        </span>
+        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#4b4b4b' }}>
+          {isConnected ? '¡Hola, Amigo! 😍' : 'Tócame para hablar 😴'}
+        </span>
+      </div>
+    </motion.div>
+  );
+};
+
+const MissionStatus = ({ pinStates, isConnected }) => {
+  return (
+    <div className="mission-panel glass" style={{ padding: '20px', borderRadius: '24px', border: '1px solid #e5e5e5', textAlign: 'center' }}>
+      <div style={{ position: 'relative', width: '60px', height: '60px', margin: '0 auto 15px' }}>
+        <div style={{ 
+          width: '100%', height: '100%', 
+          background: pinStates[13] ? 'var(--accent)' : '#f0f0f0', 
+          borderRadius: '50%', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: pinStates[13] ? '0 0 20px var(--accent)' : 'none',
+          transition: 'all 0.3s ease',
+          border: '4px solid white'
+        }}>
+          <Zap size={30} color={pinStates[13] ? 'white' : '#ccc'} fill={pinStates[13] ? 'white' : 'none'} />
+        </div>
+        {isConnected && (
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            style={{ position: 'absolute', bottom: -5, right: -5, background: '#58cc02', width: '22px', height: '22px', borderRadius: '50%', border: '3px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white' }} />
+          </motion.div>
+        )}
+      </div>
+      <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '1.1rem', color: '#4b4b4b' }}>Estado del Kit</h3>
+      <p style={{ fontSize: '0.8rem', color: '#777' }}>
+        {isConnected ? "¡El kit real está escuchando! ⚡" : "Viendo el simulador... 🌑"}
+      </p>
+    </div>
+  );
+};
+
+const LevelMap = ({ onSelectLevel, levels }) => {
+  return (
+    <div className="level-path">
+      <header style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>Aventura Arduino</h1>
+        <p style={{ color: '#777', maxWidth: '600px', margin: '0 auto' }}>¡Sigue el camino para convertirte en un Maestro Maker!</p>
+      </header>
+      
+      {levels.map((level, index) => (
+        <div key={level.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <motion.div 
+            whileHover={{ scale: level.locked ? 1 : 1.1 }}
+            className={`level-node ${level.completed ? 'completed' : ''} ${level.locked ? 'locked' : ''}`}
+            onClick={() => !level.locked && onSelectLevel(level)}
+          >
+            {level.locked ? <Settings size={32} /> : level.id}
+          </motion.div>
+          <span style={{ marginTop: '10px', fontWeight: '800', fontFamily: 'var(--font-playful)', color: '#4b4b4b' }}>
+            {level.title}
+          </span>
+          {index < levels.length - 1 && (
+            <div style={{ width: '8px', height: '40px', background: '#e5e5e5', borderRadius: '4px', margin: '10px 0' }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// --- Main App ---
+
+export default function App() {
+  const [view, setView] = useState('map');
+  const [currentLevel, setCurrentLevel] = useState(null);
+  const [pinStates, setPinStates] = useState({ 13: false });
+  const [activeModal, setActiveModal] = useState(null); // 'success', 'error', 'kit-wizard', 'adult-setup'
+  const blocklyDiv = useRef(null);
+  const workspace = useRef(null);
+  const [hintVisible, setHintVisible] = useState(false);
+
+  // Serial State
+  const [isConnected, setIsConnected] = useState(false);
+  const serialPort = useRef(null);
+  const serialWriter = useRef(null);
+
+  const [levels, setLevels] = useState([
+    { 
+      id: 1, 
+      title: 'El Gran Comienzo', 
+      riddle: '¡Hola Inventor! Tu primera misión es despertar al LED. ¿Puedes encender la luz?', 
+      allowedBlocks: ['arduino_led_on'],
+      target: 'arduino_led_on',
+      completed: false,
+      locked: false 
+    },
+    { 
+      id: 2, 
+      title: 'Luz Mágica', 
+      riddle: '¡Genial! Ahora haz que el LED parpadee como una estrella: enciende, espera y apaga.',
+      allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait'],
+      target: 'arduino_wait',
+      completed: false,
+      locked: true 
+    },
+    { 
+      id: 3, 
+      title: 'Lógica Galáctica', 
+      riddle: '¡Nivel Experto! Usa la lógica para decidir cuándo brillar.',
+      allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait', 'controls_if', 'logic_compare', 'logic_boolean'],
+      target: 'controls_if',
+      completed: false,
+      locked: true 
+    },
+  ]);
+
+  // Handle Serial Operations
+  const openPort = async (port) => {
+    try {
+      await port.open({ baudRate: 9600 });
+      const encoder = new TextEncoderStream();
+      encoder.readable.pipeTo(port.writable);
+      serialWriter.current = encoder.writable.getWriter();
+      serialPort.current = port;
+      setIsConnected(true);
+      setActiveModal(null);
+    } catch (e) {
+      console.error("No se pudo abrir el puerto:", e);
+      setIsConnected(false);
+    }
+  };
+
+  const connectKit = async () => {
+    if (!navigator.serial) {
+      alert("Tu navegador no soporta la conexión directa con el kit. ¡Prueba usando Chrome o Edge!");
+      return;
+    }
+    try {
+      const port = await navigator.serial.requestPort();
+      await openPort(port);
+    } catch (e) {
+      console.error("Selección de puerto cancelada");
+    }
+  };
+
+  const disconnectKit = async () => {
+    if (serialPort.current) {
+      if (serialWriter.current) {
+        await serialWriter.current.releaseLock();
+        serialWriter.current = null;
+      }
+      await serialPort.current.close();
+      serialPort.current = null;
+      setIsConnected(false);
+    }
+  };
+
+  // Auto-Connect and Event Listeners
+  useEffect(() => {
+    if (!navigator.serial) return;
+
+    const handleAutoConnect = async () => {
+      try {
+        const ports = await navigator.serial.getPorts();
+        if (ports.length > 0) {
+          // Try to connect to the first authorized port
+          await openPort(ports[0]);
+        }
+      } catch (err) {
+        console.warn("Auto-connect falló:", err);
+      }
+    };
+
+    handleAutoConnect();
+
+    const onConnect = (e) => handleAutoConnect();
+    const onDisconnect = (e) => {
+      setIsConnected(false);
+      serialPort.current = null;
+    };
+
+    navigator.serial.addEventListener('connect', onConnect);
+    navigator.serial.addEventListener('disconnect', onDisconnect);
+
+    return () => {
+      if (navigator.serial) {
+        navigator.serial.removeEventListener('connect', onConnect);
+        navigator.serial.removeEventListener('disconnect', onDisconnect);
+      }
+    };
+  }, []);
+
+  const sendSerial = async (data) => {
+    if (serialWriter.current) {
+      try {
+        await serialWriter.current.write(data);
+      } catch (e) {
+        console.error("Error enviando datos:", e);
+        setIsConnected(false);
+      }
+    }
+  };
+
+  const completeLevel = (id) => {
+    setLevels(prev => prev.map(l => {
+      if (l.id === id) return { ...l, completed: true };
+      if (l.id === id + 1) return { ...l, locked: false };
+      return l;
+    }));
+  };
+
+  // Blockly Initialization
+  const injectBlockly = () => {
+    if (!blocklyDiv.current || !currentLevel) return;
+    
+    try {
+      if (workspace.current) workspace.current.dispose();
+
+      const toolboxBlocks = [
+        { type: 'arduino_led_on', kind: 'block' },
+        { type: 'arduino_led_off', kind: 'block' },
+        { type: 'arduino_wait', kind: 'block' },
+        { type: 'controls_if', kind: 'block' },
+        { type: 'logic_compare', kind: 'block' },
+        { type: 'logic_boolean', kind: 'block' }
+      ].filter(b => currentLevel.allowedBlocks.includes(b.type));
+
+      workspace.current = Blockly.inject(blocklyDiv.current, {
+        toolbox: { kind: 'flyoutToolbox', contents: toolboxBlocks },
+        grid: { spacing: 25, length: 3, colour: '#eee', snap: true },
+        trashcan: true,
+        move: { scrollbars: true, drag: true, wheel: true },
+        zoom: { controls: true, wheel: true, startScale: 1.1 },
+        theme: Blockly.Themes.Classic
+      });
+
+      const defaultXml = `
+        <xml xmlns="https://developers.google.com/blockly/xml">
+          <block type="arduino_setup" x="150" y="50" deletable="false" movable="true"></block>
+          <block type="arduino_loop" x="150" y="250" deletable="false" movable="true"></block>
+        </xml>
+      `;
+      Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(defaultXml), workspace.current);
+      Blockly.svgResize(workspace.current);
+    } catch (err) { console.error(err); }
+  };
+
+  useEffect(() => {
+    if (view === 'editor') {
+      const tid = setTimeout(injectBlockly, 500);
+      return () => {
+        clearTimeout(tid);
+        if (workspace.current) {
+          workspace.current.dispose();
+          workspace.current = null;
+        }
+      };
+    }
+  }, [view, currentLevel]);
+
+  const executeBlock = async (block) => {
+    const type = block.type;
+    if (type === 'arduino_led_on') {
+      setPinStates({ 13: true });
+      await sendSerial("H13");
+      await new Promise(r => setTimeout(r, 400));
+    } else if (type === 'arduino_led_off') {
+      setPinStates({ 13: false });
+      await sendSerial("L13");
+      await new Promise(r => setTimeout(r, 400));
+    } else if (type === 'arduino_wait') {
+      const seconds = parseFloat(block.getFieldValue('SECONDS')) || 1;
+      await new Promise(r => setTimeout(r, seconds * 1000));
+    }
+  };
+
+  const runCode = async () => {
+    if (!workspace.current) return;
+    const allBlocks = workspace.current.getAllBlocks(false);
+    const setupBlock = allBlocks.find(b => b.type === 'arduino_setup');
+    const loopBlock = allBlocks.find(b => b.type === 'arduino_loop');
+
+    let missionSuccess = false;
+    if (setupBlock) {
+      let block = setupBlock.getInputTargetBlock('STACK');
+      while (block) {
+        if (block.type === currentLevel.target) missionSuccess = true;
+        await executeBlock(block);
+        block = block.getNextBlock();
+      }
+    }
+    if (loopBlock) {
+      let block = loopBlock.getInputTargetBlock('STACK');
+      while (block) {
+        if (block.type === currentLevel.target) missionSuccess = true;
+        await executeBlock(block);
+        block = block.getNextBlock();
+      }
+    }
+    
+    setTimeout(() => {
+      setActiveModal(missionSuccess ? 'success' : 'error');
+      if (missionSuccess) completeLevel(currentLevel.id);
+    }, 800);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#fcfcfc' }}>
+      
+      {/* Header with KitBot */}
+      <nav className="glass" style={{ 
+        height: '80px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        padding: '0 40px',
+        position: 'sticky', top: 0, zIndex: 100,
+        borderBottom: '2px solid #e5e5e5'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div style={{ background: 'var(--primary)', padding: '10px 14px', borderRadius: '12px', color: 'white', fontWeight: 'bold', fontSize: '1.4rem', boxShadow: '0 4px 0 #46a302' }}>HB!</div>
+          <h2 style={{ color: 'var(--secondary)', fontSize: '1.5rem', letterSpacing: '-1px', fontWeight: 900 }}>HELLO, BLOCKS! <span style={{ color: 'var(--primary)', fontSize: '0.8rem', verticalAlign: 'middle', marginLeft: '5px' }}>KIDS</span></h2>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+          <KitBotAssistant isConnected={isConnected} onClick={() => isConnected ? disconnectKit() : setActiveModal('kit-wizard')} />
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f7f7f7', padding: '8px 16px', borderRadius: '12px' }}>
+              <Zap size={20} color="#ffc800" fill="#ffc800" />
+              <span style={{ fontWeight: 'bold' }}>1,240 XP</span>
+            </div>
+            <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#1cb0f6', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 0 #1898d4' }}>
+              <User color="white" size={24} />
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main style={{ flex: 1, position: 'relative' }}>
+        <AnimatePresence mode="wait">
+          {view === 'map' ? (
+            <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="view-container">
+              <LevelMap onSelectLevel={(level) => { setCurrentLevel(level); setView('editor'); }} levels={levels} />
+            </motion.div>
+          ) : (
+            <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', height: 'calc(100vh - 80px)', background: '#fff' }}>
+              
+              {/* Mission Sidebar */}
+              <div style={{ width: '340px', background: 'white', borderRight: '2px solid #e5e5e5', display: 'flex', flexDirection: 'column', zIndex: 10 }}>
+                <div style={{ padding: '30px', flex: 1, overflowY: 'auto' }}>
+                  <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', marginBottom: '30px', padding: '10px 14px', borderRadius: '12px' }}>
+                    <ArrowLeft size={14} /> MAPA DE AVENTURA
+                  </button>
+                  
+                  <div style={{ marginBottom: '25px' }}>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--secondary)', fontWeight: '900', letterSpacing: '1px' }}>RETO {currentLevel?.id}</span>
+                    <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '2rem', marginTop: '6px', lineHeight: 1.1 }}>{currentLevel?.title}</h3>
+                  </div>
+
+                  <div style={{ background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)', padding: '25px', borderRadius: '28px', fontSize: '1rem', border: '2px solid #e1f0ff', marginBottom: '30px', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '-12px', left: '25px', background: 'var(--secondary)', color: 'white', padding: '4px 12px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '800' }}>MISIÓN</div>
+                    <p style={{ color: '#4b4b4b', fontWeight: '500', lineHeight: 1.5 }}>{currentLevel?.riddle}</p>
+                  </div>
+
+                  <MissionStatus pinStates={pinStates} isConnected={isConnected} />
+                </div>
+                
+                <div style={{ padding: '30px', background: 'white', borderTop: '2px solid #f0f0f0' }}>
+                  <button className="primary" style={{ width: '100%', padding: '20px', fontSize: '1.3rem' }} onClick={runCode}>
+                    <Play size={26} style={{ marginRight: '10px' }} /> EMPEZAR RETO
+                  </button>
+                </div>
+              </div>
+
+              {/* Blockly Region */}
+              <div style={{ flex: 1, position: 'relative', background: '#fcfcfc' }}>
+                <div ref={blocklyDiv} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+                
+                {/* Visual Hint Bubble */}
+                {hintVisible && (
+                  <motion.div 
+                    initial={{ scale: 0, y: 20 }} animate={{ scale: 1, y: 0 }}
+                    style={{ position: 'absolute', bottom: '100px', left: '40px', background: 'white', padding: '20px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', border: '3px solid var(--accent)', maxWidth: '250px', zIndex: 100 }}
+                  >
+                    <div style={{ fontSize: '1.2rem', marginBottom: '8px' }}>💡 Pista de KitBot:</div>
+                    <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4 }}>Prueba a poner el bloque de <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
+                    <button onClick={() => setHintVisible(false)} style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>¡Entendido!</button>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Modals Container */}
+      <AnimatePresence>
+        {activeModal && (
+          <motion.div key="global-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="glass" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.4)' }}>
+            
+            <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }} style={{ background: 'white', padding: '40px', borderRadius: '40px', textAlign: 'center', width: '100%', maxWidth: '500px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
+              
+              {/* SUCCESS MODAL */}
+              {activeModal === 'success' && (
+                <>
+                  <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🏆</div>
+                  <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '10px' }}>¡BRUTAL!</h2>
+                  <p style={{ fontSize: '1.2rem', color: '#777', marginBottom: '30px' }}>Has superado el reto como un auténtico inventor.</p>
+                  <button className="primary" style={{ width: '100%' }} onClick={() => { setActiveModal(null); setView('map'); }}>SIGUIENTE AVENTURA</button>
+                </>
+              )}
+
+              {/* ERROR MODAL */}
+              {activeModal === 'error' && (
+                <>
+                  <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🤔</div>
+                  <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.5rem', color: '#ff4b4b', marginBottom: '10px' }}>¡CASI!</h2>
+                  <p style={{ fontSize: '1.2rem', color: '#777', marginBottom: '30px' }}>Algo no ha salido bien. ¿Quieres ver una pista de KitBot?</p>
+                  <button className="primary" style={{ width: '100%', background: '#ff4b4b', marginBottom: '10px' }} onClick={() => setActiveModal(null)}>REVISAR BLOQUES</button>
+                  <button style={{ color: '#999', fontWeight: 'bold', background: 'none', border: 'none' }} onClick={() => { setActiveModal(null); setHintVisible(true); }}>SÍ, NECESITO UNA PISTA 💡</button>
+                </>
+              )}
+
+              {/* KIT WIZARD (KID VERSION) */}
+              {activeModal === 'kit-wizard' && (
+                <>
+                  <div style={{ fontSize: '6rem', marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                    <motion.div animate={{ x: [0, 20, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Monitor size={80} color="#1cb0f6" /></motion.div>
+                    <Link size={40} color="#ccc" style={{ alignSelf: 'center' }} />
+                    <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1 }}><Cpu size={80} color="#58cc02" /></motion.div>
+                  </div>
+                  <h2 style={{ fontFamily: 'var(--font-playful)', fontSize: '2.2rem', color: 'var(--secondary)', marginBottom: '15px' }}>¡Despierta a KitBot!</h2>
+                  <p style={{ fontSize: '1.1rem', color: '#777', marginBottom: '30px', lineHeight: 1.5 }}>Conecta el cable de tu Kit Cirkids al ordenador y pulsa el botón mágico para empezar a jugar.</p>
+                  
+                  <button className="primary" style={{ width: '100%', padding: '25px', fontSize: '1.4rem' }} onClick={connectKit}>
+                    ¡PULSAR BOTÓN MÁGICO! ✨
+                  </button>
+                  
+                  <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+                     <button onClick={() => setActiveModal('adult-setup')} style={{ border: 'none', background: 'none', color: '#bbb', fontSize: '0.8rem', textDecoration: 'underline' }}>Guía para Adultos</button>
+                     <button onClick={() => setActiveModal(null)} style={{ border: 'none', background: 'none', color: '#bbb', fontSize: '0.8rem', textDecoration: 'underline' }}>Cerrar</button>
+                  </div>
+                </>
+              )}
+
+              {/* ADULT SETUP (TECHNICAL) */}
+              {activeModal === 'adult-setup' && (
+                <div style={{ textAlign: 'left' }}>
+                  <h3 style={{ fontSize: '1.5rem', marginBottom: '10px', color: '#333' }}>Manual para Adultos 👨‍🏫</h3>
+                  <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '20px' }}>Para habilitar el control en vivo, el Arduino debe tener cargado el programa "Bridge".</p>
+                  <pre style={{ background: '#f4f4f4', padding: '15px', borderRadius: '15px', fontSize: '0.7rem', maxHeight: '200px', overflowY: 'auto', marginBottom: '25px' }}>
+{`void setup() {
+  Serial.begin(9600);
+  for(int i=2; i<=13; i++) pinMode(i, OUTPUT);
+}
+void loop() {
+  if (Serial.available() >= 3) {
+    char action = Serial.read();
+    int pin = Serial.parseInt();
+    digitalWrite(pin, action == 'H' ? HIGH : LOW);
+  }
+}`}
+                  </pre>
+                  <button className="primary" style={{ width: '100%' }} onClick={() => setActiveModal('kit-wizard')}>VOLVER AL ASISTENTE</button>
+                </div>
+              )}
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
