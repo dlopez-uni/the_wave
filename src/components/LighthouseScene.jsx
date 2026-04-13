@@ -108,7 +108,7 @@ const LighthouseScene = ({ pinStates, isSimulating }) => {
       </div>
 
       {/* Lighthouse */}
-      <div style={{ position: 'absolute', bottom: '112px', right: '64px' }}>
+      <div style={{ position: 'absolute', bottom: '82px', right: '70px' }}>
         <svg width="50" height="90" viewBox="0 0 50 90" fill="none">
           {/* Tower */}
           <path d="M15,90 L12,30 L38,30 L35,90 Z" fill="#ef4444" />

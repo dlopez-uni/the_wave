@@ -113,6 +113,28 @@ if (!Blockly.Blocks['arduino_wait']) {
   };
 }
 
+if (!Blockly.Blocks['arduino_fan_on']) {
+  Blockly.Blocks['arduino_fan_on'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Encender Hélice 🌀");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour("#1cb0f6"); // Blue for movement
+    }
+  };
+}
+
+if (!Blockly.Blocks['arduino_fan_off']) {
+  Blockly.Blocks['arduino_fan_off'] = {
+    init: function() {
+      this.appendDummyInput().appendField("Apagar Hélice 🛑");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour("#ff4b4b"); // Red for stop
+    }
+  };
+}
+
 // --- Components ---
 
 const KitBotAssistant = ({ isConnected, onClick }) => {
@@ -619,6 +641,8 @@ export default function App() {
       const toolboxBlocks = [
         { type: 'arduino_led_on', kind: 'block' },
         { type: 'arduino_led_off', kind: 'block' },
+        { type: 'arduino_fan_on', kind: 'block' },
+        { type: 'arduino_fan_off', kind: 'block' },
         { type: 'arduino_wait', kind: 'block' },
         { type: 'controls_if', kind: 'block' },
         { type: 'logic_compare', kind: 'block' },
@@ -710,6 +734,14 @@ export default function App() {
       setPinStates({ 13: false });
       await sendSerial("L13");
       await new Promise(r => setTimeout(r, 400));
+    } else if (type === 'arduino_fan_on') {
+      setPinStates({ 13: true });
+      await sendSerial("F1"); // Specific command for fan
+      await new Promise(r => setTimeout(r, 400));
+    } else if (type === 'arduino_fan_off') {
+      setPinStates({ 13: false });
+      await sendSerial("F0"); // Specific command for fan
+      await new Promise(r => setTimeout(r, 400));
     } else if (type === 'arduino_wait') {
       const seconds = parseFloat(block.getFieldValue('SECONDS')) || 1;
       await new Promise(r => setTimeout(r, seconds * 1000));
@@ -742,7 +774,8 @@ export default function App() {
       if (setupBlock) {
         let block = setupBlock.getInputTargetBlock('STACK');
         while (block) {
-          if (block.type === currentLevel.target) missionSuccess = true;
+          // If level 1, target MUST be in loop block, so we don't set success here
+          if (currentLevel.id !== 1 && block.type === currentLevel.target) missionSuccess = true;
           await executeBlock(block);
           block = block.getNextBlock();
         }
@@ -803,6 +836,10 @@ export default function App() {
           code += '  digitalWrite(13, HIGH);\n';
         } else if (block.type === 'arduino_led_off') {
           code += '  digitalWrite(13, LOW);\n';
+        } else if (block.type === 'arduino_fan_on') {
+          code += '  // Encender Hélice\n  digitalWrite(13, HIGH); \n'; // En hardware real puede ser otro pin
+        } else if (block.type === 'arduino_fan_off') {
+          code += '  // Apagar Hélice\n  digitalWrite(13, LOW); \n';
         } else if (block.type === 'arduino_wait') {
           const seconds = parseFloat(block.getFieldValue('SECONDS')) || 1;
           code += `  delay(${seconds * 1000});\n`;
@@ -1090,7 +1127,7 @@ export default function App() {
                         {generatedCode}
                       </pre>
                     </div>
-                  ) : currentLevel?.id === 2 ? (
+                  ) : currentLevel?.id === 1 ? (
                     <LighthouseScene key={`light-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />
                   ) : (
                     <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} isSimulating={isSimulating} />

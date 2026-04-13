@@ -1,8 +1,8 @@
 export const getDefaultLevels = () => [
   { 
     id: 1, 
-    title: '¡Despegue!', 
-    riddle: '¡Hola Inventor! Tu primera misión es hacer que el helicóptero despegue. ¡Usa el bloque de encender LED para activar el motor!', 
+    title: 'El Faro y el Bucle', 
+    riddle: '¡Hola Inventor! Para que la luz del faro brille constantemente, debemos poner el bloque de encender LED dentro de "Siempre 🔄". ¡Pruébalo!', 
     allowedBlocks: ['arduino_led_on'],
     target: 'arduino_led_on',
     completed: false,
@@ -10,18 +10,18 @@ export const getDefaultLevels = () => [
   },
   { 
     id: 2, 
-    title: 'El Barco en la Niebla', 
-    riddle: '¡Genial! Ahora un barco necesita guía. El barco solo se moverá si el faro está encendido. ¡Enciende el LED para guiar al capitán!',
-    allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait'],
-    target: 'arduino_led_on',
+    title: 'Prueba de Hélices', 
+    riddle: '¡Genial! Ahora toca probar el motor del helicóptero. En el bloque "Siempre 🔄", haz esta secuencia: Enciende hélice, espera, apágala, espera y vuelve a encender.',
+    allowedBlocks: ['arduino_fan_on', 'arduino_fan_off', 'arduino_wait'],
+    target: 'arduino_fan_on',
     completed: false,
     locked: true 
   },
   { 
     id: 3, 
-    title: 'Vuelo de Rescate', 
-    riddle: '¡Nivel Experto! El helicóptero necesita un chequeo de seguridad. Usa un bloque LÓGICO (Si...) para que el motor solo se encienda cuando tú lo decidas.',
-    allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait', 'controls_if', 'logic_compare', 'logic_boolean'],
+    title: 'Despegue Inteligente', 
+    riddle: '¡Nivel Experto! Queremos que las hélices solo se activen con seguridad. Usa un bloque LÓGICO (Si...) para controlar cuándo encender el motor.',
+    allowedBlocks: ['arduino_fan_on', 'arduino_fan_off', 'arduino_wait', 'controls_if', 'logic_compare', 'logic_boolean'],
     target: 'controls_if',
     completed: false,
     locked: true 
