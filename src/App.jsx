@@ -252,7 +252,8 @@ export default function App() {
   const [currentLevel, setCurrentLevel] = useState(null);
   const [pinStates, setPinStates] = useState({ 13: false });
   const [runId, setRunId] = useState(0);
-  const [activeModal, setActiveModal] = useState(null); // 'success', 'error', 'kit-wizard', 'adult-setup'
+  const [activeModal, setActiveModal] = useState(null); // 'success', 'error', 'kit-wizard', 'adult-setup', 'code-preview'
+  const [generatedCode, setGeneratedCode] = useState('');
   const blocklyDiv = useRef(null);
   const workspace = useRef(null);
   const [hintVisible, setHintVisible] = useState(false);
@@ -489,11 +490,14 @@ export default function App() {
       }
     }
     if (loopBlock) {
-      let block = loopBlock.getInputTargetBlock('STACK');
-      while (block) {
-        if (block.type === currentLevel.target) missionSuccess = true;
-        await executeBlock(block);
-        block = block.getNextBlock();
+      // Para simulación, repetimos el loop 3 veces para que se vea el efecto
+      for (let i = 0; i < 3; i++) {
+        let block = loopBlock.getInputTargetBlock('STACK');
+        while (block) {
+          if (block.type === currentLevel.target) missionSuccess = true;
+          await executeBlock(block);
+          block = block.getNextBlock();
+        }
       }
     }
     
@@ -509,8 +513,23 @@ export default function App() {
     const setupBlock = allBlocks.find(b => b.type === 'arduino_setup');
     const loopBlock = allBlocks.find(b => b.type === 'arduino_loop');
 
-    let setupCode = "void setup() {\n  pinMode(13, OUTPUT);\n";
+    let setupCode = "void setup() {\n  Serial.begin(9600);\n  pinMode(13, OUTPUT);\n";
     let loopCode = "void loop() {\n";
+
+    const getBlockValue = (block) => {
+      if (!block) return "true";
+      if (block.type === 'logic_boolean') {
+        return block.getFieldValue('BOOL').toLowerCase();
+      } else if (block.type === 'logic_compare') {
+        const op = { 'EQ': '==', 'NEQ': '!=', 'LT': '<', 'LTE': '<=', 'GT': '>', 'GTE': '>=' }[block.getFieldValue('OP')] || '==';
+        const left = getBlockValue(block.getInputTargetBlock('A'));
+        const right = getBlockValue(block.getInputTargetBlock('B'));
+        return `(${left} ${op} ${right})`;
+      } else if (block.type === 'math_number') {
+        return block.getFieldValue('NUM');
+      }
+      return "true";
+    };
 
     const getBlockCode = (block) => {
       let code = "";
@@ -523,15 +542,9 @@ export default function App() {
           const seconds = parseFloat(block.getFieldValue('SECONDS')) || 1;
           code += `  delay(${seconds * 1000});\n`;
         } else if (block.type === 'controls_if') {
-          // Intentar obtener la condición si existe, si no usar true
-          let condition = "true";
-          let condBlock = block.getInputTargetBlock('IF0');
-          if (condBlock && condBlock.type === 'logic_boolean') {
-             condition = condBlock.getFieldValue('BOOL').toLowerCase();
-          }
+          let condition = getBlockValue(block.getInputTargetBlock('IF0'));
           code += `  if (${condition}) {\n`;
-          let doBlock = block.getInputTargetBlock('DO0');
-          code += getBlockCode(doBlock);
+          code += getBlockCode(block.getInputTargetBlock('DO0'));
           code += `  }\n`;
         }
         block = block.getNextBlock();
@@ -549,12 +562,29 @@ export default function App() {
     setupCode += "}\n\n";
     loopCode += "}\n";
 
-    return setupCode + loopCode;
+    const finalCode = setupCode + loopCode;
+    console.log("Generando código Arduino:\n", finalCode);
+    setGeneratedCode(finalCode);
+    return finalCode;
+  };
+
+  const showCodePreview = () => {
+    generateArduinoCode();
+    setActiveModal('code-preview');
   };
 
   const uploadToArduino = async () => {
     const code = generateArduinoCode();
     if (!code) return;
+
+    // IMPORTANTE: Cerramos la conexión "en vivo" del navegador si existe,
+    // porque si el navegador tiene el puerto abierto, arduino-cli no puede usarlo (Acceso denegado).
+    if (isConnected) {
+      console.log("Desconectando modo en vivo para permitir la subida...");
+      await disconnectKit();
+      // Pequeña espera para que el OS libere el puerto
+      await new Promise(r => setTimeout(r, 500));
+    }
     
     setIsUploading(true);
     try {
@@ -565,9 +595,13 @@ export default function App() {
       });
       const data = await response.json();
       if (!response.ok) {
-        alert("Error: " + (data.error || 'Fallo de compilación'));
+        if (data.details && data.details.includes("Acceso denegado")) {
+           alert("Error: El puerto está ocupado. Asegúrate de que el 'KitBot' esté durmiendo (Desconectado) y no tengas el Monitor Serie abierto en otro programa.");
+        } else {
+           alert("Error: " + (data.error || 'Fallo de compilación'));
+        }
       } else {
-        alert("¡Código subido a la placa con éxito! Tu arduino ahora se ejecutará automáticamente.");
+        alert("¡Código subido a la placa con éxito! Tu arduino ahora se ejecutará solo.");
       }
     } catch (e) {
       console.error(e);
@@ -677,6 +711,9 @@ export default function App() {
                 </div>
 
                 <div style={{display: 'flex', gap: '10px'}}>
+                  <button style={{ padding: '12px 20px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '2px solid #e2e8f0', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', color: '#64748b' }} onClick={showCodePreview}>
+                    <Monitor size={18} /> VER CÓDIGO
+                  </button>
                   <button style={{ padding: '12px 20px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '10px', background: '#f0f0f0', border: '2px solid #ccc', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', color: '#555' }} onClick={uploadToArduino} disabled={isUploading}>
                     {isUploading ? <RotateCcw className="animate-spin" size={20} /> : <Cpu size={20} />} 
                     {isUploading ? 'SUBIENDO...' : 'CARGAR A PLACA'}
@@ -807,6 +844,20 @@ void loop() {
 }`}
                   </pre>
                   <button className="primary" style={{ width: '100%' }} onClick={() => setActiveModal('kit-wizard')}>VOLVER AL ASISTENTE</button>
+                </div>
+              )}
+
+              {/* CODE PREVIEW MODAL */}
+              {activeModal === 'code-preview' && (
+                <div style={{ textAlign: 'left' }}>
+                  <h3 style={{ fontSize: '1.8rem', marginBottom: '15px', color: 'var(--secondary)', fontFamily: 'var(--font-playful)' }}>Código del Inventor 🤖</h3>
+                  <p style={{ fontSize: '1rem', color: '#666', marginBottom: '15px' }}>Este es el código que el robot entiende. Así es como se ve por dentro:</p>
+                  <div style={{ position: 'relative' }}>
+                    <pre style={{ background: '#1e293b', color: '#f8fafc', padding: '20px', borderRadius: '15px', fontSize: '0.9rem', maxHeight: '350px', overflowY: 'auto', marginBottom: '25px', fontFamily: 'monospace', border: '4px solid #334155' }}>
+                      {generatedCode}
+                    </pre>
+                  </div>
+                  <button className="primary" style={{ width: '100%', padding: '20px', fontSize: '1.2rem' }} onClick={() => setActiveModal(null)}>VOLVER AL EDITOR</button>
                 </div>
               )}
 
