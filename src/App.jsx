@@ -892,7 +892,7 @@ export default function App() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ background: 'var(--primary)', padding: '10px 14px', borderRadius: '12px', color: 'white', fontWeight: 'bold', fontSize: '1.4rem', boxShadow: '0 4px 0 #0284c7' }}>HB!</div>
-          <h2 style={{ color: 'var(--secondary)', fontSize: '1.5rem', letterSpacing: '-1px', fontWeight: 900 }}>HELLO, BLOCKS! <span style={{ color: 'var(--primary)', fontSize: '0.8rem', verticalAlign: 'middle', marginLeft: '5px' }}>KIDS</span></h2>
+          <h2 style={{ color: 'var(--secondary)', fontSize: '1.5rem', letterSpacing: '-1px', fontWeight: 900 }}>HELLO BLOCKS <span style={{ color: 'var(--primary)', fontSize: '0.8rem', verticalAlign: 'middle', marginLeft: '5px' }}>KIDS</span></h2>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
