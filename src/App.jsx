@@ -47,6 +47,13 @@ import { serializeWorkspace, buildContextSummary, getMissionProgressScore } from
 // Locale and Block Registration
 Blockly.setLocale(Es);
 
+const blocklyTheme = Blockly.Theme.defineTheme('kidcode', {
+  base: Blockly.Themes.Classic,
+  fontStyle: {
+    family: 'Lemur, sans-serif',
+  },
+});
+
 // Define Blocks Globally
 if (!Blockly.Blocks['arduino_setup']) {
   Blockly.Blocks['arduino_setup'] = {
@@ -624,7 +631,7 @@ export default function App() {
         trashcan: true,
         move: { scrollbars: false, drag: true, wheel: true },
         zoom: { controls: true, wheel: true, startScale: 1.6 },
-        theme: Blockly.Themes.Classic
+        theme: blocklyTheme
       });
 
       const defaultXml = `
