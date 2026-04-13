@@ -4,24 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 const LighthouseScene = ({ pinStates, isSimulating }) => {
   const ledState = isSimulating && (pinStates[13] || false);
   
-  // Track toggles locally based on pinStates changes
-  const [toggleCount, setToggleCount] = useState(0);
-  const [lastState, setLastState] = useState(ledState);
+  const [shipProgress, setShipProgress] = useState(0);
 
   useEffect(() => {
-    if (isSimulating && ledState !== lastState) {
-      setToggleCount((prev) => prev + 1);
-      setLastState(ledState);
+    let interval;
+    if (ledState && isSimulating) {
+      interval = setInterval(() => {
+        setShipProgress((prev) => Math.min(prev + 0.4, 75));
+      }, 50);
     }
-    if (!isSimulating) {
-      setLastState(false);
-    }
-  }, [ledState, lastState, isSimulating]);
-
-  // Ship moves closer whenever LED has been toggled
-  const shipProgress = useMemo(() => {
-    return Math.min(toggleCount * 15, 70);
-  }, [toggleCount]);
+    return () => clearInterval(interval);
+  }, [ledState, isSimulating]);
 
   const starsData = useMemo(() => {
     return [...Array(12)].map(() => ({
