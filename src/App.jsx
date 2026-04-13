@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, 
@@ -30,6 +30,11 @@ import CharacterMascot from './components/CharacterMascot';
 import CompletionModal from './components/CompletionModal';
 import HelicopterScene from './components/HelicopterScene';
 import LighthouseScene from './components/LighthouseScene';
+
+// AI Utilities
+import { getMissionHint } from './mistralApi';
+import { getKidsSystemPrompt, buildKidsUserPrompt } from './prompts';
+import { serializeWorkspace, buildContextSummary, getMissionProgressScore } from './blocklySerializer';
 
 // Locale and Block Registration
 Blockly.setLocale(Es);
@@ -258,6 +263,14 @@ export default function App() {
   const workspace = useRef(null);
   const [hintVisible, setHintVisible] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
+  
+  // AI States
+  const [aiHint, setAiHint] = useState('');
+  const [aiEmoji, setAiEmoji] = useState('🤖');
+  const [isHintLoading, setIsHintLoading] = useState(false);
+  const [lastProgressTime, setLastProgressTime] = useState(Date.now());
+  const [hintRequested, setHintRequested] = useState(false);
+  const [lastManualHintTime, setLastManualHintTime] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
   // Serial State
@@ -390,6 +403,58 @@ export default function App() {
     }));
   };
 
+  const requestAiHint = useCallback(async (trigger = 'auto') => {
+    if (!workspace.current || !currentLevel || isHintLoading) return;
+
+    if (trigger === 'manual' && Date.now() - lastManualHintTime < 15000) {
+      setAiEmoji('⏳');
+      setAiHint('¡Dame un segundito! Estoy buscando la mejor pista para ti.');
+      setHintVisible(true);
+      return;
+    }
+
+    setHintVisible(true);
+    setIsHintLoading(true);
+
+    try {
+      const serializedTree = serializeWorkspace(workspace.current);
+      const score = getMissionProgressScore(workspace.current, currentLevel.target);
+      
+      const contextSummary = buildContextSummary({
+        serializedTree,
+        currentLevel,
+        isConnected,
+        pinStates
+      });
+
+      const systemPrompt = getKidsSystemPrompt();
+      const userPrompt = buildKidsUserPrompt({
+        levelTitle: currentLevel.title,
+        levelRiddle: currentLevel.riddle,
+        targetBlock: currentLevel.target,
+        progressScore: score,
+        contextSummary
+      });
+
+      const result = await getMissionHint({ systemPrompt, userPrompt });
+      setAiHint(result.hint);
+      setAiEmoji(result.emoji);
+      setHintRequested(true);
+
+      if (trigger === 'manual') setLastManualHintTime(Date.now());
+      
+      // Auto-hide after some time if it was an auto-hint
+      if (trigger === 'auto') {
+        setTimeout(() => setHintVisible(false), 20000);
+      }
+    } catch (err) {
+      console.error(err);
+      setAiHint("¡Ups! He tenido un pequeño cortocircuito. Revisa tus bloques, ¡seguro que lo logras!");
+    } finally {
+      setIsHintLoading(false);
+    }
+  }, [currentLevel, isConnected, pinStates, isHintLoading, lastManualHintTime]);
+
   // Blockly Initialization
   const injectBlockly = () => {
     if (!blocklyDiv.current || !currentLevel) return;
@@ -424,6 +489,20 @@ export default function App() {
       Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(defaultXml), workspace.current);
       Blockly.svgResize(workspace.current);
       
+      workspace.current.addChangeListener((event) => {
+        const trackableEvents = new Set([
+          Blockly.Events.BLOCK_CREATE,
+          Blockly.Events.BLOCK_DELETE,
+          Blockly.Events.BLOCK_MOVE,
+          Blockly.Events.BLOCK_CHANGE
+        ]);
+
+        if (event.isUiEvent || !trackableEvents.has(event.type)) return;
+
+        setLastProgressTime(Date.now());
+        setHintRequested(false);
+      });
+
       // Center the view on the blocks to make it easy for children
       setTimeout(() => {
         if (workspace.current) {
@@ -436,6 +515,10 @@ export default function App() {
   useEffect(() => {
     if (view === 'editor') {
       setInfoExpanded(true);
+      setLastProgressTime(Date.now());
+      setHintRequested(false);
+      setAiHint('¡Dime si te quedas atascado!');
+      setAiEmoji('👋');
       const tid = setTimeout(injectBlockly, 500);
       return () => {
         clearTimeout(tid);
@@ -446,6 +529,22 @@ export default function App() {
       };
     }
   }, [view, currentLevel]);
+
+  useEffect(() => {
+    if (view !== 'editor' || !currentLevel) return;
+
+    const inactivityId = setInterval(() => {
+      if (!workspace.current || isHintLoading || hintRequested) return;
+      if (Date.now() - lastProgressTime < 60000) return;
+
+      const score = getMissionProgressScore(workspace.current, currentLevel.target);
+      if (score >= 1) return; // Mission looks solved already
+
+      requestAiHint('auto');
+    }, 10000);
+
+    return () => clearInterval(inactivityId);
+  }, [view, currentLevel, lastProgressTime, isHintLoading, hintRequested, requestAiHint]);
 
   const executeBlock = async (block) => {
     const type = block.type;
@@ -763,14 +862,18 @@ export default function App() {
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               style={{ background: 'white', padding: '20px', borderRadius: '24px', borderBottomLeftRadius: '4px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', border: '3px solid var(--primary)', maxWidth: '280px', pointerEvents: 'auto' }}
             >
-              <div style={{ fontSize: '1.1rem', marginBottom: '6px' }}>💡 Pista de KitBot:</div>
-              <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4, margin: 0 }}>Prueba a usar <b>"{currentLevel?.target.replace('arduino_','').replace('_',' ')}"</b> dentro de "Al empezar".</p>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setHintVisible(false); }} 
-                style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer', padding: 0 }}
-              >
-                ¡Entendido!
-              </button>
+              <div style={{ fontSize: '1.1rem', marginBottom: '6px' }}>{isHintLoading ? '🤖 KitBot pensando...' : `${aiEmoji} Pista de KitBot:`}</div>
+              <p style={{ fontSize: '0.9rem', color: '#555', lineHeight: 1.4, margin: 0 }}>
+                {isHintLoading ? 'Buscando la mejor solución para ti...' : aiHint}
+              </p>
+              {!isHintLoading && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setHintVisible(false); }} 
+                  style={{ background: 'none', border: 'none', color: 'var(--secondary)', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer', padding: 0 }}
+                >
+                  ¡Entendido!
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -778,10 +881,14 @@ export default function App() {
         <motion.div 
           whileHover={{ scale: 1.05 }} 
           whileTap={{ scale: 0.95 }}
-          onClick={() => view === 'editor' && setHintVisible(!hintVisible)} 
+          onClick={() => {
+            if (view === 'editor') {
+              requestAiHint('manual');
+            }
+          }} 
           style={{ cursor: view === 'editor' ? 'pointer' : 'default', pointerEvents: 'auto' }}
         >
-          <CharacterMascot size={120} emotion={hintVisible ? 'thinking' : 'happy'} speaking={hintVisible} />
+          <CharacterMascot size={120} emotion={isHintLoading ? 'thinking' : hintVisible ? 'excited' : 'happy'} speaking={hintVisible} />
         </motion.div>
       </div>
 
