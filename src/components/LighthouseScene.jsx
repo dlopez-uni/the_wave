@@ -67,27 +67,40 @@ const LighthouseScene = ({ pinStates }) => {
         )}
       </AnimatePresence>
 
-      {/* Waves */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '128px' }}>
+      {/* Premium Waves */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '160px', overflow: 'hidden' }}>
+        {/* Back wave */}
         <motion.div
-          style={{ position: 'absolute', bottom: '64px', left: 0, right: 0, height: '80px' }}
-          animate={{ x: [0, 15, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', bottom: '40px', left: 0, width: '200%', height: '100px' }}
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
         >
-          <svg viewBox="0 0 400 40" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0,20 Q50,5 100,20 Q150,35 200,20 Q250,5 300,20 Q350,35 400,20 L400,40 L0,40 Z" fill="#1e3a5f" opacity="0.6" />
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+            <path d="M0,60 C150,100 300,20 600,60 C750,100 900,20 1200,60 L1200,120 L0,120 Z" fill="#0369a1" opacity="0.6" />
           </svg>
         </motion.div>
+        
+        {/* Middle wave */}
         <motion.div
-          style={{ position: 'absolute', bottom: '32px', left: 0, right: 0, height: '64px' }}
-          animate={{ x: [0, -10, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ position: 'absolute', bottom: '20px', left: 0, width: '200%', height: '80px' }}
+          animate={{ x: ["-50%", "0%"] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
         >
-          <svg viewBox="0 0 400 40" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
-            <path d="M0,15 Q40,30 80,15 Q120,0 160,15 Q200,30 240,15 Q280,0 320,15 Q360,30 400,15 L400,40 L0,40 Z" fill="#1e3a5f" opacity="0.8" />
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+             <path d="M0,60 C150,20 300,100 600,60 C750,20 900,100 1200,60 L1200,120 L0,120 Z" fill="#0284c7" opacity="0.8" />
           </svg>
         </motion.div>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', background: '#1e3a5f' }} />
+
+        {/* Front wave */}
+        <motion.div
+          style={{ position: 'absolute', bottom: 0, left: 0, width: '200%', height: '60px' }}
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+        >
+          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+             <path d="M0,40 C150,80 300,0 600,40 C750,80 900,0 1200,40 L1200,120 L0,120 Z" fill="#0ea5e9" opacity="1" />
+          </svg>
+        </motion.div>
       </div>
 
       {/* Rocky island */}
@@ -166,11 +179,12 @@ const LighthouseScene = ({ pinStates }) => {
 
       {/* Ship */}
       <motion.div
-        style={{ position: 'absolute', bottom: '56px', left: '5%' }}
-        animate={{ x: `${shipProgress}vw`, y: [0, -3, 0] }}
+        style={{ position: 'absolute', bottom: '80px', left: '5%', zIndex: 5 }}
+        animate={{ x: `${shipProgress}vw`, y: [0, -6, 0], rotate: [-2, 3, -2] }}
         transition={{
           x: { type: 'spring', stiffness: 30, damping: 15 },
-          y: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+          y: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
+          rotate: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' }
         }}
       >
         <svg width="60" height="35" viewBox="0 0 60 35" fill="none">

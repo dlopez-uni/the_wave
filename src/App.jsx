@@ -293,8 +293,8 @@ export default function App() {
     },
     { 
       id: 2, 
-      title: 'Luz Mágica', 
-      riddle: '¡Genial! Ahora haz que el faro parpadee como una estrella para guiar completamente al barco: enciende, espera y apaga.',
+      title: 'Señales de Alerta', 
+      riddle: '¡Genial! Ahora debemos probar el sistema de luces del helicóptero haciéndolo parpadear como alerta: enciende, espera y apaga.',
       allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait'],
       target: 'arduino_wait',
       completed: false,
@@ -572,6 +572,9 @@ export default function App() {
     setRunId(prev => prev + 1);
     setPinStates({ 13: false });
     
+    // Give React time to mount the new scene with the reset state
+    await new Promise(r => setTimeout(r, 50));
+    
     // Reset hardware if connected
     if (isConnected && serialWriter.current) {
       await sendSerial("L13");
@@ -790,7 +793,7 @@ export default function App() {
                                 {currentLevel?.id}
                               </div>
                               <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '2rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.1 }}>
-                                {currentLevel?.id === 1 ? '¡El Barco en la Niebla! 🚢' : currentLevel?.id === 2 ? '¡Luz de Estrella! 🌟' : '¡Misión Helicóptero! 🚁'}
+                                {currentLevel?.id === 1 ? '¡El Barco en la Niebla! 🚢' : currentLevel?.id === 2 ? '¡Señales de Alerta! 🚁' : '¡Despegue de Emergencia! 🚁'}
                               </h3>
                             </div>
                             
@@ -846,7 +849,7 @@ export default function App() {
                         {generatedCode}
                       </pre>
                     </div>
-                  ) : currentLevel?.id === 3 ? (
+                  ) : currentLevel?.id >= 2 ? (
                     <HelicopterScene key={`heli-${runId}`} pinStates={pinStates} />
                   ) : (
                     <LighthouseScene key={`light-${runId}`} pinStates={pinStates} />
@@ -939,32 +942,9 @@ export default function App() {
                   </button>
                   
                   <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                     <button onClick={() => setActiveModal('adult-setup')} style={{ border: 'none', background: 'none', color: '#bbb', fontSize: '0.8rem', textDecoration: 'underline' }}>Guía para Adultos</button>
                      <button onClick={() => setActiveModal(null)} style={{ border: 'none', background: 'none', color: '#bbb', fontSize: '0.8rem', textDecoration: 'underline' }}>Cerrar</button>
                   </div>
                 </>
-              )}
-
-              {/* ADULT SETUP (TECHNICAL) */}
-              {activeModal === 'adult-setup' && (
-                <div style={{ textAlign: 'left' }}>
-                  <h3 style={{ fontSize: '1.5rem', marginBottom: '10px', color: '#333' }}>Manual para Adultos 👨‍🏫</h3>
-                  <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '20px' }}>Para habilitar el control en vivo, el Arduino debe tener cargado el programa "Bridge".</p>
-                  <pre style={{ background: '#f4f4f4', padding: '15px', borderRadius: '15px', fontSize: '0.7rem', maxHeight: '200px', overflowY: 'auto', marginBottom: '25px' }}>
-{`void setup() {
-  Serial.begin(9600);
-  for(int i=2; i<=13; i++) pinMode(i, OUTPUT);
-}
-void loop() {
-  if (Serial.available() >= 3) {
-    char action = Serial.read();
-    int pin = Serial.parseInt();
-    digitalWrite(pin, action == 'H' ? HIGH : LOW);
-  }
-}`}
-                  </pre>
-                  <button className="primary" style={{ width: '100%' }} onClick={() => setActiveModal('kit-wizard')}>VOLVER AL ASISTENTE</button>
-                </div>
               )}
 
               {/* CODE PREVIEW MODAL */}
