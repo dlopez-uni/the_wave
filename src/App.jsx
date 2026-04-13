@@ -247,9 +247,9 @@ export default function App() {
     { 
       id: 3, 
       title: 'Despegue de Emergencia', 
-      riddle: 'Las hélices de nuestro helicóptero de rescate no giran. Tu misión es enviar energía al motor encendiendo el LED para que podamos despegar.',
-      allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait'],
-      target: 'arduino_led_on',
+      riddle: '¡Nivel Experto! El helicóptero necesita un chequeo de seguridad. Usa un bloque LÓGICO (Si...) de la caja de herramientas, e introduce dentro el bloque de "Encender LED" para activar el motor principal.',
+      allowedBlocks: ['arduino_led_on', 'arduino_led_off', 'arduino_wait', 'controls_if', 'logic_compare', 'logic_boolean'],
+      target: 'controls_if',
       completed: false,
       locked: true 
     },
@@ -388,6 +388,7 @@ export default function App() {
 
   useEffect(() => {
     if (view === 'editor') {
+      setInfoExpanded(true);
       const tid = setTimeout(injectBlockly, 500);
       return () => {
         clearTimeout(tid);
@@ -495,14 +496,14 @@ export default function App() {
                     <ArrowLeft size={14} /> MAPA
                   </button>
                   
-                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}>
+                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
                     <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 30px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #46a302' }}>
                       <HelpCircle size={20} /> MISIÓN: {currentLevel?.title} {infoExpanded ? '▲' : '▼'}
                     </button>
                     
                     <AnimatePresence>
                       {infoExpanded && (
-                        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', transform: 'translateX(-50%)', width: '450px', background: 'white', border: '2px solid #e5e5e5', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                        <motion.div initial={{ opacity: 0, y: -10, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: -10, x: "-50%" }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', width: '450px', background: 'white', border: '2px solid #e5e5e5', borderRadius: '20px', padding: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
                           <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--secondary)', fontWeight: '900', letterSpacing: '1px' }}>RETO {currentLevel?.id}</span>
                           <div style={{ background: 'linear-gradient(135deg, #fff 0%, #f0f7ff 100%)', padding: '20px', borderRadius: '20px', border: '2px solid #e1f0ff', marginTop: '15px', marginBottom: '20px' }}>
                             <p style={{ color: '#4b4b4b', fontWeight: '500', lineHeight: 1.5, margin: 0 }}>{currentLevel?.riddle}</p>
