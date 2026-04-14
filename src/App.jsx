@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, 
@@ -52,12 +52,17 @@ import { serializeWorkspace, buildContextSummary, getMissionProgressScore } from
 // Locale and Block Registration
 Blockly.setLocale(Es);
 
-const blocklyTheme = Blockly.Theme.defineTheme('kidcode', {
-  base: Blockly.Themes.Classic,
-  fontStyle: {
-    family: 'Lemur, sans-serif',
-  },
-});
+const FONT_PREFERENCE_KEY = 'cbk-open-dyslexic-enabled';
+
+const getBlocklyTheme = (isDyslexicFontEnabled) => Blockly.Theme.defineTheme(
+  isDyslexicFontEnabled ? 'kidcode-dyslexic' : 'kidcode-default',
+  {
+    base: Blockly.Themes.Classic,
+    fontStyle: {
+      family: isDyslexicFontEnabled ? 'OpenDyslexic, sans-serif' : 'Lemur, sans-serif',
+    },
+  }
+);
 
 // Define Blocks Globally
 if (!Blockly.Blocks['arduino_setup']) {
@@ -396,6 +401,12 @@ export default function App() {
   const [hintVisible, setHintVisible] = useState(false);
   const [infoExpanded, setInfoExpanded] = useState(false);
   const [showCodeInSim, setShowCodeInSim] = useState(false);
+  const [isDyslexicFontEnabled, setIsDyslexicFontEnabled] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.localStorage.getItem(FONT_PREFERENCE_KEY) === 'true';
+  });
   
   // AI States
   const [aiHint, setAiHint] = useState('');
@@ -405,6 +416,11 @@ export default function App() {
   const [hintRequested, setHintRequested] = useState(false);
   const [lastManualHintTime, setLastManualHintTime] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+
+  const blocklyTheme = useMemo(
+    () => getBlocklyTheme(isDyslexicFontEnabled),
+    [isDyslexicFontEnabled]
+  );
 
   // Serial State
   const [isConnected, setIsConnected] = useState(false);
@@ -518,6 +534,23 @@ export default function App() {
       setView('landing');
     }
   }, [view, activeProfile]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const selectedFont = isDyslexicFontEnabled ? "'OpenDyslexic', sans-serif" : "'Lemur', sans-serif";
+
+    root.style.setProperty('--font-main', selectedFont);
+    root.style.setProperty('--font-playful', selectedFont);
+    root.classList.toggle('dyslexic-font-enabled', isDyslexicFontEnabled);
+    window.localStorage.setItem(FONT_PREFERENCE_KEY, String(isDyslexicFontEnabled));
+  }, [isDyslexicFontEnabled]);
+
+  useEffect(() => {
+    if (workspace.current) {
+      workspace.current.setTheme(blocklyTheme);
+      Blockly.svgResize(workspace.current);
+    }
+  }, [blocklyTheme]);
 
   // Handle Serial Operations
   const openPort = async (port) => {
@@ -1037,6 +1070,16 @@ export default function App() {
               Salir del panel
             </button>
           )}
+
+          <label className="font-toggle-switch" aria-label="Activar fuente OpenDyslexic">
+            <input
+              type="checkbox"
+              checked={isDyslexicFontEnabled}
+              onChange={(event) => setIsDyslexicFontEnabled(event.target.checked)}
+            />
+            <span className="font-toggle-slider" aria-hidden="true" />
+            <span className="font-toggle-label">Modo dislexia</span>
+          </label>
         </div>
       </nav>
 
@@ -1078,7 +1121,7 @@ export default function App() {
             <motion.div key="editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#fff' }}>
               
               {/* Top Bar for Editor */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', position: 'relative', zIndex: 9999 }}>
+              <div className="editor-top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isDyslexicFontEnabled ? '10px 15px' : '15px 40px', background: 'white', borderBottom: '2px solid #e5e5e5', zIndex: 9999, gap: '10px' }}>
                 
                 {infoExpanded && (
                   <div
@@ -1087,14 +1130,18 @@ export default function App() {
                   />
                 )}
 
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                  <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: '0.75rem', padding: '10px 14px', borderRadius: '12px', cursor: 'pointer' }}>
+                {/* LEFT: MAPA */}
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                  <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: isDyslexicFontEnabled ? '0.7rem' : '0.75rem', padding: isDyslexicFontEnabled ? '8px 10px' : '10px 14px', borderRadius: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     <ArrowLeft size={14} /> MAPA
                   </button>
+                </div>
                   
-                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
-                    <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 30px', borderRadius: '12px', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #0284c7' }}>
-                      <HelpCircle size={20} /> MISIÓN: {currentLevel?.title} {infoExpanded ? '▲' : '▼'}
+                {/* CENTER: MISIÓN */}
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'center', zIndex: 9999 }}>
+                  <div style={{ position: 'relative' }}>
+                    <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: isDyslexicFontEnabled ? '8px 16px' : '10px 30px', borderRadius: '12px', fontSize: isDyslexicFontEnabled ? '0.9rem' : '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #0284c7', whiteSpace: 'nowrap' }}>
+                      <HelpCircle size={isDyslexicFontEnabled ? 16 : 20} /> MISIÓN: {currentLevel?.title} {infoExpanded ? '▲' : '▼'}
                     </button>
                     
                     <AnimatePresence>
@@ -1104,23 +1151,23 @@ export default function App() {
                             style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
                             onClick={() => setInfoExpanded(false)}
                           />
-                          <motion.div initial={{ opacity: 0, y: -10, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: -10, x: "-50%" }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', width: '550px', background: 'white', border: '4px solid var(--secondary)', borderRadius: '32px', padding: '30px', boxShadow: '0 15px 40px rgba(0,0,0,0.15)', zIndex: 9999 }}>
+                          <motion.div initial={{ opacity: 0, y: -10, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: -10, x: "-50%" }} style={{ position: 'absolute', top: 'calc(100% + 15px)', left: '50%', width: 'min(90vw, 550px)', background: 'white', border: '4px solid var(--secondary)', borderRadius: '32px', padding: isDyslexicFontEnabled ? '20px' : '30px', boxShadow: '0 15px 40px rgba(0,0,0,0.15)', zIndex: 9999 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-                              <div style={{ background: 'var(--primary)', color: 'white', minWidth: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', boxShadow: '0 4px 0 #0284c7' }}>
+                              <div style={{ background: 'var(--primary)', color: 'white', minWidth: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 'bold', boxShadow: '0 4px 0 #0284c7' }}>
                                 {currentLevel?.id}
                               </div>
-                              <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: '2rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.1 }}>
+                              <h3 style={{ fontFamily: 'var(--font-playful)', fontSize: isDyslexicFontEnabled ? '1.5rem' : '2rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.1 }}>
                                 {currentLevel?.title}
                               </h3>
                             </div>
                             
-                            <div style={{ background: '#f8fafc', padding: '25px', borderRadius: '24px', border: '3px dashed #cbd5e1', marginBottom: '25px' }}>
-                              <p style={{ fontFamily: 'var(--font-playful)', color: '#334155', fontSize: '1.3rem', lineHeight: 1.4, margin: 0 }}>
+                            <div style={{ background: '#f8fafc', padding: isDyslexicFontEnabled ? '15px' : '25px', borderRadius: '24px', border: '3px dashed #cbd5e1', marginBottom: '25px' }}>
+                              <p style={{ fontFamily: 'var(--font-playful)', color: '#334155', fontSize: isDyslexicFontEnabled ? '1.1rem' : '1.3rem', lineHeight: 1.4, margin: 0 }}>
                                 {currentLevel?.riddle}
                               </p>
                             </div>
                             
-                            <button className="primary" style={{ width: '100%', padding: '16px', fontSize: '1.3rem', marginTop: '20px' }} onClick={() => setInfoExpanded(false)}>
+                            <button className="primary" style={{ width: '100%', padding: isDyslexicFontEnabled ? '12px' : '16px', fontSize: isDyslexicFontEnabled ? '1.1rem' : '1.3rem', marginTop: '20px' }} onClick={() => setInfoExpanded(false)}>
                               ¡ENTENDIDO, A PROGRAMAR! 🚀
                             </button>
                           </motion.div>
@@ -1129,13 +1176,15 @@ export default function App() {
                     </AnimatePresence>
                   </div>
                 </div>
-                <div style={{display: 'flex', gap: '10px'}}>
-                  <button className="outline-dark" style={{ display: 'flex', alignItems: 'center', gap: '10px' }} onClick={uploadToArduino} disabled={isUploading}>
-                    {isUploading ? <RotateCcw className="animate-spin" size={20} /> : <Cpu size={20} />} 
+
+                {/* RIGHT: ACTIONS */}
+                <div style={{ display: 'flex', gap: '10px', flex: 1, justifyContent: 'flex-end' }}>
+                  <button className="outline-dark" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isDyslexicFontEnabled ? '8px 12px' : '12px 24px', fontSize: isDyslexicFontEnabled ? '0.8rem' : '1rem', whiteSpace: 'nowrap' }} onClick={uploadToArduino} disabled={isUploading}>
+                    {isUploading ? <RotateCcw className="animate-spin" size={18} /> : <Cpu size={18} />} 
                     {isUploading ? 'SUBIENDO...' : 'CARGAR A PLACA'}
                   </button>
-                  <button className="primary" style={{ padding: '12px 30px', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={runCode}>
-                    <Play size={24} /> EMPEZAR RETO
+                  <button className="primary" style={{ padding: isDyslexicFontEnabled ? '8px 16px' : '12px 30px', fontSize: isDyslexicFontEnabled ? '0.9rem' : '1.2rem', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }} onClick={runCode}>
+                    <Play size={isDyslexicFontEnabled ? 18 : 24} /> EMPEZAR RETO
                   </button>
                 </div>
               </div>

@@ -6,6 +6,15 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  size-adjust: 86%;
+  font-display: swap;
+}
+
 :root {
   --primary: #0ea5e9; /* Light Blue */
   --primary-shadow: #0284c7;
@@ -21,6 +30,10 @@
   --border-color: #e5e5e5;
   --font-main: 'Lemur', sans-serif;
   --font-playful: 'Lemur', sans-serif;
+  --button-font-size: 1rem;
+  --button-padding-y: 12px;
+  --button-padding-x: 24px;
+  --button-letter-spacing: 0.5px;
 }
 
 * {
@@ -44,9 +57,16 @@ button {
   font-weight: 700;
   border-radius: 16px;
   transition: all 0.1s ease;
-  padding: 12px 24px;
-  font-size: 1rem;
-  letter-spacing: 0.5px;
+  padding: var(--button-padding-y) var(--button-padding-x);
+  font-size: var(--button-font-size);
+  letter-spacing: var(--button-letter-spacing);
+}
+
+.dyslexic-font-enabled {
+  --button-font-size: 0.9rem;
+  --button-padding-y: 10px;
+  --button-padding-x: 18px;
+  --button-letter-spacing: 0.2px;
 }
 
 button.primary {
@@ -153,6 +173,63 @@ button.outline-dark:active {
 
 .view-container {
   min-height: calc(100vh - 80px);
+}
+
+.font-toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 2px solid #dbeafe;
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 3px 0 #cbd5e1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.font-toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.font-toggle-slider {
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.font-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.font-toggle-switch input:checked + .font-toggle-slider {
+  background: #0ea5e9;
+}
+
+.font-toggle-switch input:checked + .font-toggle-slider::after {
+  transform: translateX(18px);
+}
+
+.font-toggle-label {
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
 }
 
 .device-profile-count {
@@ -643,6 +720,15 @@ button.outline-dark:active {
 
   .landing-page::before {
     inset: 20px 0 auto;
+  }
+
+  .font-toggle-label {
+    display: none;
+  }
+
+  .font-toggle-switch {
+    padding: 6px;
+    gap: 6px;
   }
 }
 
