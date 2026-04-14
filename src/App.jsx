@@ -21,7 +21,12 @@ import {
   ChevronRight,
   Monitor,
   Code,
-  EyeOff
+  EyeOff,
+  Lock,
+  Wind,
+  Lightbulb,
+  Rocket,
+  Star as StarIcon
 } from 'lucide-react';
 import * as Blockly from 'blockly';
 import 'blockly/blocks';
@@ -248,7 +253,37 @@ const LevelMap = ({ onSelectLevel, levels }) => {
               className={`level-node ${level.completed ? 'completed' : ''} ${level.locked ? 'locked' : ''}`}
               onClick={() => !level.locked && onSelectLevel(level)}
             >
-              {level.locked ? <span style={{ fontSize: '2rem' }}>🔒</span> : (level.completed ? <span style={{ fontSize: '2rem' }}>⭐</span> : <span style={{ fontSize: '2rem', fontWeight: 900 }}>{level.id}</span>)}
+              {level.locked ? (
+                <Lock size={32} />
+              ) : level.completed ? (
+                <StarIcon size={32} fill="white" />
+              ) : (
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {level.icon === 'lightbulb' && <Lightbulb size={32} />}
+                  {level.icon === 'wind' && <Wind size={32} />}
+                  {level.icon === 'rocket' && <Rocket size={32} />}
+                  {!level.icon && <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>{level.id}</span>}
+                  
+                  <span style={{ 
+                    position: 'absolute', 
+                    top: -15, 
+                    right: -15, 
+                    background: 'white', 
+                    color: 'var(--primary)', 
+                    width: '24px', 
+                    height: '24px', 
+                    borderRadius: '50%', 
+                    fontSize: '0.8rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    fontWeight: 900
+                  }}>
+                    {level.id}
+                  </span>
+                </div>
+              )}
             </motion.div>
             
             <motion.span 
@@ -1248,7 +1283,7 @@ export default function App() {
       <CompletionModal 
         isOpen={activeModal === 'success'}
         missionTitle={currentLevel?.title || 'Misión Superada'}
-        completionMessage="Has superado el reto como un auténtico inventor. ¡Increíble! 🎉"
+        completionMessage="Has superado el reto como un auténtico inventor. ¡Increíble!"
         stars={3}
         onNext={() => { setActiveModal(null); setView('map'); }}
         onRetry={() => { setActiveModal(null); }}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ArrowRight, RotateCcw } from 'lucide-react';
+import { Star, ArrowRight, RotateCcw, PartyPopper } from 'lucide-react';
 import CharacterMascot from './CharacterMascot';
 
 const confettiColors = ['#22c55e', '#f59e0b', '#0ea5e9', '#8b5cf6', '#ec4899', '#ef4444'];
@@ -92,20 +92,44 @@ const CompletionModal = ({
             </motion.div>
 
             {/* Title */}
-            <motion.h2
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              style={{
-                fontSize: '2.4rem',
-                fontFamily: 'var(--font-playful)',
-                color: 'var(--primary)',
-                marginBottom: '8px',
-                lineHeight: 1.1
-              }}
-            >
-              ¡Misión Completada! 🎉
-            </motion.h2>
+            <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+              <motion.div
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.6, type: 'spring' }}
+                style={{ position: 'absolute', left: '0', top: '-10px', zIndex: 1 }}
+              >
+                <PartyPopper size={32} color="#f59e0b" style={{ transform: 'scaleX(-1)' }} />
+              </motion.div>
+
+              <motion.h2
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                style={{
+                  fontSize: '2.1rem',
+                  fontFamily: 'var(--font-playful)',
+                  color: 'var(--primary)',
+                  marginBottom: '8px',
+                  lineHeight: 1.2,
+                  position: 'relative',
+                  zIndex: 2,
+                  padding: '0 20px'
+                }}
+              >
+                ¡Misión Completada!
+              </motion.h2>
+
+              <motion.div
+                initial={{ scale: 0, rotate: 45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.6, type: 'spring' }}
+                style={{ position: 'absolute', right: '0', top: '-10px', zIndex: 1 }}
+              >
+                <PartyPopper size={32} color="#f59e0b" />
+              </motion.div>
+            </div>
+
 
             <motion.p
               initial={{ y: 20, opacity: 0 }}
