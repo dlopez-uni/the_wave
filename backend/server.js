@@ -26,6 +26,9 @@ if (!fs.existsSync(SKETCH_DIR)) {
   fs.mkdirSync(SKETCH_DIR);
 }
 
+// Helper para esperar
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 // Helper para ejecutar comandos
 function runCommand(cmd) {
   return new Promise((resolve, reject) => {
@@ -77,35 +80,75 @@ app.post('/api/upload', async (req, res) => {
   // Guardamos el código (aunque venga pre-compilado, es más seguro compilar+subir con arduino-cli en un paso)
   fs.writeFileSync(SKETCH_PATH, code);
   
-  const cli = getCliPath();
-  
   // Si no se especifica puerto, intentamos encontrar uno primero
   let uploadPort = port;
-  if (!uploadPort) {
-    const listRes = await runCommand(`"${cli}" board list --format json`);
-    try {
-      const data = JSON.parse(listRes.stdout);
-      const list = data.detected_ports || [];
-      if (list.length > 0) uploadPort = list[0].port.address;
-    } catch(e) {
-      console.error("List error:", e);
+  let targetFQBN = FQBN;
+
+  const cli = getCliPath();
+  const listRes = await runCommand(`"${cli}" board list --format json`);
+  
+  try {
+    const data = JSON.parse(listRes.stdout);
+    const list = data.detected_ports || [];
+    if (list.length > 0) {
+      const bestPort = list[0];
+      if (!uploadPort) uploadPort = bestPort.port.address;
+      
+      // Si la placa es reconocida, usamos su FQBN específico
+      if (bestPort.matching_boards && bestPort.matching_boards.length > 0) {
+        targetFQBN = bestPort.matching_boards[0].fqbn;
+        console.log(`Placa detectada: ${bestPort.matching_boards[0].name} (${targetFQBN})`);
+      }
     }
+  } catch(e) {
+    console.error("Error detectando placa:", e);
   }
   
   if (!uploadPort) {
     return res.status(400).json({ error: "No se encontró ningún puerto especificado ni conectado automáticamente." });
   }
 
-  console.log(`Compilando y subiendo al puerto ${uploadPort}...`);
-  // En arduino-cli, upload automáticamente compila si es necesario, o podemos usar compile --upload
-  const { stdout, stderr, error } = await runCommand(`"${cli}" compile --upload -p ${uploadPort} -b ${FQBN} "${SKETCH_DIR}"`);
+  console.log(`Compilando y subiendo al puerto ${uploadPort} con FQBN ${targetFQBN}...`);
   
-  if (error) {
-    console.error("Error subiendo:", stderr);
-    return res.status(500).json({ error: "Fallo al subir a la placa", details: stderr });
+  let result;
+  let retries = 6;
+  
+  while (retries > 0) {
+    result = await runCommand(`"${cli}" compile --upload -p ${uploadPort} -b ${targetFQBN} "${SKETCH_DIR}"`);
+    
+    if (!result.error) break;
+
+    const errorMsg = (result.stderr || "").toLowerCase();
+    if (errorMsg.includes("access denied") || errorMsg.includes("acceso denegado") || errorMsg.includes("busy")) {
+      console.log(`Puerto ocupado (Acceso denegado), reintentando en 2s... (${retries} intentos restantes)`);
+      await sleep(2000);
+      retries--;
+    } else {
+      // Si es otro tipo de error (compilación, etc.), no reintentamos
+      break;
+    }
   }
   
-  res.json({ message: "Código subido correctamente", output: stdout });
+  if (result.error) {
+    const errorMsg = (result.stderr || "").toLowerCase();
+    
+    // Si falla por sincronización y estábamos probando Uno o Nano normal,
+    // intentamos con el bootloader antiguo del Nano (muy común en clones).
+    if (errorMsg.includes("sync") || errorMsg.includes("timeout") || errorMsg.includes("resp=")) {
+      if (targetFQBN === 'arduino:avr:uno' || targetFQBN === 'arduino:avr:nano') {
+        const fallbackFQBN = 'arduino:avr:nano:cpu=atmega328old';
+        console.log(`Fallo de sincronización. Probando fallback con ${fallbackFQBN}...`);
+        result = await runCommand(`"${cli}" compile --upload -p ${uploadPort} -b ${fallbackFQBN} "${SKETCH_DIR}"`);
+      }
+    }
+  }
+
+  if (result.error) {
+    console.error("Error subiendo:", result.stderr);
+    return res.status(500).json({ error: "Fallo al subir a la placa", details: result.stderr });
+  }
+  
+  res.json({ message: "Código subido correctamente", output: result.stdout });
 });
 
 app.listen(PORT, () => {

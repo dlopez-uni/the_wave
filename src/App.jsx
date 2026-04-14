@@ -590,13 +590,30 @@ export default function App() {
 
   const disconnectKit = async () => {
     if (serialPort.current) {
-      if (serialWriter.current) {
-        await serialWriter.current.releaseLock();
-        serialWriter.current = null;
+      try {
+        console.log("Cerrando puerto serial...");
+        if (serialWriter.current) {
+          try {
+            // Cerramos el stream para que pipeTo se detenga y libere port.writable
+            await serialWriter.current.close();
+          } catch (e) {
+            console.warn("Error cerrando writer, intentando abortar:", e);
+            await serialWriter.current.abort();
+          }
+          serialWriter.current = null;
+        }
+        
+        // Pequeño respiro para que los streams internos se limpien
+        await new Promise(r => setTimeout(r, 100));
+        
+        await serialPort.current.close();
+        console.log("Puerto serial cerrado correctamente.");
+      } catch (e) {
+        console.error("Error al cerrar el puerto serial:", e);
+      } finally {
+        serialPort.current = null;
+        setIsConnected(false);
       }
-      await serialPort.current.close();
-      serialPort.current = null;
-      setIsConnected(false);
     }
   };
 
@@ -961,8 +978,8 @@ export default function App() {
     if (isConnected) {
       console.log("Desconectando modo en vivo para permitir la subida...");
       await disconnectKit();
-      // Pequeña espera para que el OS libere el puerto
-      await new Promise(r => setTimeout(r, 500));
+      // Espera extra larga para sistemas Windows con bloqueos persistentes
+      await new Promise(r => setTimeout(r, 2000));
     }
     
     setIsUploading(true);
@@ -974,8 +991,8 @@ export default function App() {
       });
       const data = await response.json();
       if (!response.ok) {
-        if (data.details && data.details.includes("Acceso denegado")) {
-           alert("Error: El puerto está ocupado. Asegúrate de que el 'KitBot' esté durmiendo (Desconectado) y no tengas el Monitor Serie abierto en otro programa.");
+        if (data.details && (data.details.includes("Acceso denegado") || data.details.includes("busy"))) {
+           alert("¡Vaya! El puerto todavía está algo ocupado. \n\nPrueba esto: Desconecta el cable USB del ordenador, vuelve a conectarlo y dale directamete a CARGAR A PLACA sin despertar antes al KitBot.");
         } else {
            alert("Error: " + (data.error || 'Fallo de compilación'));
         }
