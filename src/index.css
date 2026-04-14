@@ -179,11 +179,9 @@ button.outline-dark:active {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: white;
-  border: 2px solid #dbeafe;
-  border-radius: 999px;
-  padding: 6px 10px;
-  box-shadow: 0 3px 0 #cbd5e1;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
 }
@@ -195,41 +193,43 @@ button.outline-dark:active {
   height: 0;
 }
 
-.font-toggle-slider {
-  width: 40px;
-  height: 22px;
-  border-radius: 999px;
+.font-toggle-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
   background: #cbd5e1;
+  box-shadow: inset 0 0 0 2px #94a3b8;
   position: relative;
-  transition: background 0.2s ease;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.font-toggle-slider::after {
+.font-toggle-indicator::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 16px;
-  height: 16px;
+  inset: 3px;
   border-radius: 50%;
   background: white;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.3);
-  transition: transform 0.2s ease;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.2s ease;
 }
 
-.font-toggle-switch input:checked + .font-toggle-slider {
-  background: #0ea5e9;
+.font-toggle-switch input:checked + .font-toggle-indicator {
+  background: var(--secondary);
+  box-shadow: inset 0 0 0 2px var(--secondary-shadow);
 }
 
-.font-toggle-switch input:checked + .font-toggle-slider::after {
-  transform: translateX(18px);
+.font-toggle-switch input:checked + .font-toggle-indicator::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .font-toggle-label {
-  color: #334155;
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.3px;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
 .device-profile-count {
@@ -727,8 +727,8 @@ button.outline-dark:active {
   }
 
   .font-toggle-switch {
-    padding: 6px;
-    gap: 6px;
+    padding: 10px;
+    gap: 0;
   }
 }
 

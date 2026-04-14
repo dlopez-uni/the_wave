@@ -1078,13 +1078,13 @@ export default function App() {
             </button>
           )}
 
-          <label className="font-toggle-switch" aria-label="Activar fuente OpenDyslexic">
+          <label className="font-toggle-switch outline-dark" aria-label="Activar fuente OpenDyslexic">
             <input
               type="checkbox"
               checked={isDyslexicFontEnabled}
               onChange={(event) => setIsDyslexicFontEnabled(event.target.checked)}
             />
-            <span className="font-toggle-slider" aria-hidden="true" />
+            <span className="font-toggle-indicator" aria-hidden="true" />
             <span className="font-toggle-label">Modo dislexia</span>
           </label>
         </div>
