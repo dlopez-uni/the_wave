@@ -269,23 +269,27 @@ const LevelMap = ({ onSelectLevel, levels }) => {
                   {level.icon === 'rocket' && <Rocket size={32} />}
                   {!level.icon && <span style={{ fontSize: '1.5rem', fontWeight: 900 }}>{level.id}</span>}
                   
+                  {/* Level Badge - Positioned above the node */}
                   <span style={{ 
                     position: 'absolute', 
-                    top: -15, 
-                    right: -15, 
-                    background: 'white', 
-                    color: 'var(--primary)', 
-                    width: '24px', 
-                    height: '24px', 
-                    borderRadius: '50%', 
-                    fontSize: '0.8rem', 
+                    top: -25, 
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'white',
+                    color: level.completed ? 'var(--accent)' : (level.locked ? '#94a3b8' : 'var(--primary)'),
+                    padding: '2px 12px',
+                    borderRadius: '12px', 
+                    fontSize: '0.75rem', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    fontWeight: 900
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
+                    fontWeight: 900,
+                    border: '2px solid #f1f5f9',
+                    zIndex: 10,
+                    whiteSpace: 'nowrap'
                   }}>
-                    {level.id}
+                    NIVEL {level.id}
                   </span>
                 </div>
               )}
@@ -427,6 +431,9 @@ export default function App() {
   const serialPort = useRef(null);
   const serialWriter = useRef(null);
 
+  // Level Map Mascot State
+  const [mapMascotMessage, setMapMascotMessage] = useState('');
+  
   const activeAvatar = activeProfile ? getAvatarById(activeProfile.avatar) : null;
 
   const getProgress = (profileLevels) => {
@@ -1028,8 +1035,8 @@ export default function App() {
           {activeProfile && (view === 'map' || view === 'editor') && (
             <button
               type="button"
-              className="secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              className="outline-dark"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}
               onClick={() => {
                 setCurrentLevel(null);
                 setHintVisible(false);
@@ -1044,8 +1051,8 @@ export default function App() {
           {view === 'landing' && (
             <button
               type="button"
-              className="secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              className="outline-dark"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}
               onClick={() => setPinModalOpen(true)}
             >
               <Settings size={16} />
@@ -1062,8 +1069,8 @@ export default function App() {
           {view === 'teacher' && (
             <button
               type="button"
-              className="secondary"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              className="outline-dark"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}
               onClick={() => setView('landing')}
             >
               <ArrowLeft size={16} />
@@ -1113,7 +1120,10 @@ export default function App() {
 
           {view === 'map' && (
             <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="view-container">
-              <LevelMap onSelectLevel={(level) => { setCurrentLevel(level); setView('editor'); }} levels={levels} />
+              <LevelMap 
+                onSelectLevel={(level) => { setCurrentLevel(level); setView('editor'); }} 
+                levels={levels}
+              />
             </motion.div>
           )}
 
@@ -1130,17 +1140,17 @@ export default function App() {
                   />
                 )}
 
-                {/* LEFT: MAPA */}
+                {/* LEFT: MAPA (Secondary Style) */}
                 <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  <button onClick={() => setView('map')} style={{ background: '#f8f9fa', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', color: '#afafaf', fontSize: isDyslexicFontEnabled ? '0.7rem' : '0.75rem', padding: isDyslexicFontEnabled ? '8px 10px' : '10px 14px', borderRadius: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  <button onClick={() => setView('map')} className="outline-dark" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: isDyslexicFontEnabled ? '0.7rem' : '0.75rem', padding: isDyslexicFontEnabled ? '8px 10px' : '10px 14px', whiteSpace: 'nowrap' }}>
                     <ArrowLeft size={14} /> MAPA
                   </button>
                 </div>
                   
-                {/* CENTER: MISIÓN */}
+                {/* CENTER: MISIÓN (Now using a more neutral secondary toggle style) */}
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'center', zIndex: 9999 }}>
                   <div style={{ position: 'relative' }}>
-                    <button onClick={() => setInfoExpanded(!infoExpanded)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--primary)', color: 'white', border: 'none', padding: isDyslexicFontEnabled ? '8px 16px' : '10px 30px', borderRadius: '12px', fontSize: isDyslexicFontEnabled ? '0.9rem' : '1.1rem', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 0 #0284c7', whiteSpace: 'nowrap' }}>
+                    <button onClick={() => setInfoExpanded(!infoExpanded)} className="outline-dark" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isDyslexicFontEnabled ? '8px 16px' : '10px 30px', fontSize: isDyslexicFontEnabled ? '0.9rem' : '1rem', whiteSpace: 'nowrap' }}>
                       <HelpCircle size={isDyslexicFontEnabled ? 16 : 20} /> MISIÓN: {currentLevel?.title} {infoExpanded ? '▲' : '▼'}
                     </button>
                     
@@ -1233,6 +1243,7 @@ export default function App() {
       {/* Global Mascot Helper */}
       <div style={{ position: 'fixed', bottom: '20px', left: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pointerEvents: 'none' }}>
         <AnimatePresence>
+          {/* Editor Hints */}
           {hintVisible && view === 'editor' && currentLevel && (
             <motion.div 
               initial={{ opacity: 0, y: 10, scale: 0.9 }} 
@@ -1254,6 +1265,29 @@ export default function App() {
               )}
             </motion.div>
           )}
+
+          {/* Map Greeting */}
+          {mapMascotMessage && view === 'map' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, x: -20 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.8, x: -20 }}
+              style={{
+                background: 'white',
+                padding: '15px 20px',
+                borderRadius: '24px 24px 24px 4px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                border: '3px solid var(--secondary)',
+                maxWidth: '220px',
+                pointerEvents: 'auto',
+                marginBottom: '15px'
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: 'bold', color: '#4b4b4b', fontSize: '0.9rem', lineHeight: 1.4 }}>
+                {mapMascotMessage}
+              </p>
+            </motion.div>
+          )}
         </AnimatePresence>
         
         <motion.div 
@@ -1262,11 +1296,22 @@ export default function App() {
           onClick={() => {
             if (view === 'editor') {
               requestAiHint('manual');
+            } else if (view === 'map') {
+              if (mapMascotMessage) {
+                setMapMascotMessage('');
+              } else {
+                setMapMascotMessage('Hola soy CodePilot estoy aquí para ayudarte.');
+                setTimeout(() => setMapMascotMessage(''), 5000);
+              }
             }
           }} 
-          style={{ cursor: view === 'editor' ? 'pointer' : 'default', pointerEvents: 'auto' }}
+          style={{ cursor: 'pointer', pointerEvents: 'auto' }}
         >
-          <CharacterMascot size={120} emotion={isHintLoading ? 'thinking' : hintVisible ? 'excited' : 'happy'} speaking={hintVisible} />
+          <CharacterMascot 
+            size={120} 
+            emotion={isHintLoading ? 'thinking' : (hintVisible || !!mapMascotMessage) ? 'excited' : 'happy'} 
+            speaking={hintVisible || !!mapMascotMessage} 
+          />
         </motion.div>
       </div>
 
